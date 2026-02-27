@@ -1,0 +1,16 @@
+# Auto normalize line endings
+* text=auto
+
+# Treat JSON, JS, JSX, CSS, HTML as text
+*.json text
+*.js text
+*.jsx text
+*.css text
+*.html text
+
+# Keep node binaries as binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
