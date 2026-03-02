@@ -82,7 +82,7 @@ Update the LoginPage component to connect with your backend:
 
 ```javascript
 // In LoginPage.jsx, replace the mock API call with:
-const response = await fetch('http://localhost:8082/api/auth/login', {
+const response = await fetch('https://flowvera-backend.onrender.com/api/auth/login', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
