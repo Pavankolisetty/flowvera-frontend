@@ -1,53 +1,102 @@
 import { useState } from "react";
 import { X, Plus, Loader } from "lucide-react";
+import { toast } from "react-hot-toast";
 import "../../styles/CreateUserModal.css";
 
-const CreateUserModal = ({ isOpen, onClose, authFetch, showNotification }) => {
+const CreateUserModal = ({ isOpen, onClose, authFetch }) => {
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     empId: "",
     password: "",
     phone: "",
-    role: "EMPLOYEE"
+    designation: ""
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
+  const allowedDomains = ["gmail.com", "outlook.com", "yahoo.com", "zoho.com"];
+
+  const isValidEmailDomain = (email) => {
+    const domain = email.split("@")[1]?.toLowerCase();
+    return allowedDomains.includes(domain);
+  };
+
   const validateForm = () => {
+
     const newErrors = {};
-    
+
     if (!formData.name.trim()) {
       newErrors.name = "Name is required";
     }
+
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    } 
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Invalid email format";
+    } 
+    else if (!isValidEmailDomain(formData.email)) {
+      newErrors.email = "Only Gmail, Outlook, Yahoo, Zoho allowed";
     }
+
     if (!formData.empId.trim()) {
       newErrors.empId = "Employee ID is required";
     }
+
     if (!formData.password.trim()) {
       newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
+    } 
+    else if (formData.password.length < 6) {
       newErrors.password = "Password must be at least 6 characters";
     }
+
     if (!formData.phone.trim()) {
-      newErrors.phone = "Phone number is required";
+      newErrors.phone = "Phone number required";
+    } 
+    else if (!/^\d{10}$/.test(formData.phone)) {
+      newErrors.phone = "Phone must be 10 digits";
     }
-    
+
+    if (!formData.designation.trim()) {
+      newErrors.designation = "Designation required";
+    }
+
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+
+    if (Object.keys(newErrors).length > 0) {
+      toast.error(Object.values(newErrors)[0]);
+      return false;
+    }
+
+    return true;
   };
 
   const handleChange = (e) => {
+
     const { name, value } = e.target;
+
+    if (name === "phone") {
+
+      const digits = value.replace(/\D/g, "");
+
+      if (digits.length > 10) return;
+
+      setFormData(prev => ({
+        ...prev,
+        phone: digits
+      }));
+
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -57,42 +106,54 @@ const CreateUserModal = ({ isOpen, onClose, authFetch, showNotification }) => {
   };
 
   const handleSubmit = async (e) => {
+
     e.preventDefault();
-    
-    if (!validateForm()) {
-      showNotification("Please fill all required fields correctly", "error");
-      return;
-    }
+
+    if (!validateForm()) return;
 
     setLoading(true);
-    
+
     try {
+
+      const payload = {
+        ...formData
+      };
+
       const response = await authFetch("/api/admin/create-user", {
         method: "POST",
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to create user");
+
+        const errorData = await response.json().catch(() => ({
+          message: "Failed to create user"
+        }));
+
+        throw new Error(errorData.message);
       }
 
       const newUser = await response.json();
-      
-      showNotification(`User ${newUser.name} created successfully!`, "success");
-      
+
+      toast.success(`User ${newUser.name} created successfully`);
+
       setFormData({
         name: "",
         email: "",
         empId: "",
         password: "",
         phone: "",
-        role: "EMPLOYEE"
+        designation: ""
       });
+
       setErrors({});
+
       onClose();
+
     } catch (error) {
-      showNotification(error.message || "Error creating user", "error");
+
+      toast.error(error.message || "Error creating user");
+
     } finally {
       setLoading(false);
     }
@@ -101,20 +162,29 @@ const CreateUserModal = ({ isOpen, onClose, authFetch, showNotification }) => {
   if (!isOpen) return null;
 
   return (
+
     <div className="modal-overlay" onClick={onClose}>
+
       <div className="modal-content create-user-modal" onClick={(e) => e.stopPropagation()}>
+
         <div className="modal-header">
           <h2>Create New User</h2>
           <button className="close-btn" onClick={onClose}>
-            <X size={24} />
+            <X size={24}/>
           </button>
         </div>
 
+        {errors.submit && (
+          <div className="error-message">
+            <p>{errors.submit}</p>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="create-user-form">
+
           <div className="form-group">
-            <label htmlFor="name">Full Name *</label>
+            <label>Full Name *</label>
             <input
-              id="name"
               type="text"
               name="name"
               value={formData.name}
@@ -126,23 +196,21 @@ const CreateUserModal = ({ isOpen, onClose, authFetch, showNotification }) => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="email">Email Address *</label>
+            <label>Email *</label>
             <input
-              id="email"
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="Enter email address"
+              placeholder="Enter email"
               className={errors.email ? "input-error" : ""}
             />
             {errors.email && <span className="error-text">{errors.email}</span>}
           </div>
 
           <div className="form-group">
-            <label htmlFor="empId">Employee ID *</label>
+            <label>Employee ID *</label>
             <input
-              id="empId"
               type="text"
               name="empId"
               value={formData.empId}
@@ -154,47 +222,47 @@ const CreateUserModal = ({ isOpen, onClose, authFetch, showNotification }) => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password *</label>
+            <label>Password *</label>
             <input
-              id="password"
               type="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="Enter password (min 6 chars)"
+              placeholder="Min 6 characters"
               className={errors.password ? "input-error" : ""}
-            />
-            {errors.password && <span className="error-text">{errors.password}</span>}
-          </div>
+            />            {errors.password && <span className="error-text">{errors.password}</span>}          </div>
 
           <div className="form-group">
-            <label htmlFor="phone">Phone Number *</label>
+            <label>Phone *</label>
+
             <input
-              id="phone"
               type="tel"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              placeholder="Enter phone number"
+              placeholder="Enter 10 digit number"
+              maxLength={10}
               className={errors.phone ? "input-error" : ""}
             />
             {errors.phone && <span className="error-text">{errors.phone}</span>}
+
           </div>
 
           <div className="form-group">
-            <label htmlFor="role">Role</label>
-            <select
-              id="role"
-              name="role"
-              value={formData.role}
+            <label>Designation *</label>
+            <input
+              type="text"
+              name="designation"
+              value={formData.designation}
               onChange={handleChange}
-            >
-              <option value="EMPLOYEE">Employee</option>
-              <option value="ADMIN">Admin</option>
-            </select>
+              placeholder="Frontend Developer"
+              className={errors.designation ? "input-error" : ""}
+            />
+            {errors.designation && <span className="error-text">{errors.designation}</span>}
           </div>
 
           <div className="form-actions">
+
             <button
               type="button"
               className="btn-cancel"
@@ -203,27 +271,35 @@ const CreateUserModal = ({ isOpen, onClose, authFetch, showNotification }) => {
             >
               Cancel
             </button>
+
             <button
               type="submit"
               className="btn-submit"
               disabled={loading}
             >
+
               {loading ? (
                 <>
-                  <Loader size={16} className="spinner" />
+                  <Loader size={16} className="spinner"/>
                   Creating...
                 </>
               ) : (
                 <>
-                  <Plus size={16} />
+                  <Plus size={16}/>
                   Create User
                 </>
               )}
+
             </button>
+
           </div>
+
         </form>
+
       </div>
+
     </div>
+
   );
 };
 

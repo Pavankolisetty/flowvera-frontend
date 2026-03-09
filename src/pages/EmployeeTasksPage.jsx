@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FileText, Calendar, BarChart3, Download, ArrowRight, Upload, CheckCircle } from "lucide-react";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 import EmployeeHeader from "../components/EmployeeHeader";
 import { useAuth } from "../context/AuthContext";
 import "../styles/EmployeeDashboard.css";
@@ -148,10 +150,33 @@ export default function EmployeeTasksPage() {
         <div className="dashboard-bg" aria-hidden="true"></div>
         <div className="employee-shell">
           <EmployeeHeader name={user?.name} />
-          <section className="employee-quote compact">
-            <span className="quote-label">Tasks</span>
-            <h2>Loading your tasks...</h2>
-          </section>
+
+          <div className="employee-panel full-width">
+            <div className="panel-header">
+              <h3>All Tasks</h3>
+              <span className="panel-badge">Overview</span>
+            </div>
+
+            <div className="employee-tasks">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div className="employee-task-card skeleton-card" key={index}>
+                  <div className="task-card-header">
+                    <Skeleton width={250} height={22} />
+                    <Skeleton width={90} height={26} style={{ borderRadius: 13 }} />
+                  </div>
+                  <Skeleton width="100%" height={45} style={{ marginBottom: 15 }} />
+                  <div className="task-card-meta">
+                    <Skeleton width={120} height={16} />
+                    <Skeleton width={110} height={16} />
+                  </div>
+                  <Skeleton width="100%" height={10} style={{ borderRadius: 5, marginBottom: 15 }} />
+                  <div className="task-card-action">
+                    <Skeleton width={160} height={36} style={{ borderRadius: 8 }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );

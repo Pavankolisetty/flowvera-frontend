@@ -3,5 +3,11 @@
   "devCommand": "npm run dev",
   "installCommand": "npm ci",
   "outputDirectory": "dist",
-  "framework": "vite"
+  "framework": "vite",
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
 }

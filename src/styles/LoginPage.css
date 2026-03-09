@@ -243,6 +243,40 @@
   transform: none;
 }
 
+.signin-progress-panel {
+  margin-top: -8px;
+  padding: 14px 16px;
+  border: 1px solid #dbe4ff;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f7f9ff 0%, #eef3ff 100%);
+  animation: fadeInUp 0.28s ease;
+}
+
+.signin-progress-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #253a73;
+  font-size: 14px;
+}
+
+.signin-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #c8d4ff;
+  border-top-color: #3558c7;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+.signin-progress-message {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: #304784;
+  font-weight: 500;
+  animation: pulseFade 0.9s ease;
+}
+
 .auth-error {
   padding: 12px 14px;
   border-radius: 8px;
@@ -340,6 +374,32 @@
   margin-top: 32px;
   font-size: 13px;
   color: #6b7280;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulseFade {
+  0% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* =========================

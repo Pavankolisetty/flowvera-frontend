@@ -2,20 +2,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Loader } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { toast } from "react-hot-toast";
 import "../styles/CreateUserPage.css";
 
-const specializations = [
-  "Frontend Developer",
-  "Backend Developer",
-  "Full Stack Developer",
-  "Software Developer",
-  "Research Engineer",
-  "Data Engineer",
-  "DevOps Engineer",
-  "UI/UX Designer",
-  "QA Engineer",
-  "Product Manager"
-];
+// Designation is now a free-text input field
 
 export default function CreateUserPage() {
   const navigate = useNavigate();
@@ -26,12 +16,11 @@ export default function CreateUserPage() {
     email: "",
     password: "",
     phone: "",
-    specialization: ""
+    designation: ""
   });
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [successMessage, setSuccessMessage] = useState("");
 
   const validateForm = () => {
     const newErrors = {};
@@ -43,6 +32,8 @@ export default function CreateUserPage() {
       newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Invalid email format";
+    } else if (!isValidEmailDomain(formData.email)) {
+      newErrors.email = "Email domain not allowed. Use Gmail, Outlook, Yahoo, or Zoho";
     }
     if (!formData.password.trim()) {
       newErrors.password = "Password is required";
@@ -51,20 +42,45 @@ export default function CreateUserPage() {
     }
     if (!formData.phone.trim()) {
       newErrors.phone = "Phone number is required";
+    } else if (!/^\d{10}$/.test(formData.phone)) {
+      newErrors.phone = "Phone number must be 10 digits";
     }
-    if (!formData.specialization.trim()) {
-      newErrors.specialization = "Specialization is required";
+    if (!formData.designation.trim()) {
+      newErrors.designation = "Designation is required";
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    if (Object.keys(newErrors).length > 0) {
+      const firstMsg = newErrors[Object.keys(newErrors)[0]];
+      toast.error(firstMsg);
+      return false;
+    }
+    return true;
+  };
+
+  const isValidEmailDomain = (email) => {
+    const allowedDomains = ["gmail.com", "outlook.com", "yahoo.com", "zoho.com"];
+    const domain = email.substring(email.indexOf("@") + 1).toLowerCase();
+    return allowedDomains.includes(domain);
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    let updatedValue = value;
+
+    // Handle phone number: only allow 10 digits
+    if (name === "phone") {
+      const digitsOnly = value.replace(/\D/g, "");
+      if (digitsOnly.length <= 10) {
+        updatedValue = digitsOnly;
+      } else {
+        return; // Don't update if more than 10 digits
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: updatedValue
     }));
     if (errors[name]) {
       setErrors(prev => ({
@@ -82,7 +98,7 @@ export default function CreateUserPage() {
     }
 
     setLoading(true);
-    setSuccessMessage("");
+
 
     try {
       const response = await authFetch("/api/admin/create-user", {
@@ -97,7 +113,7 @@ export default function CreateUserPage() {
 
       const newUser = await response.json();
 
-      setSuccessMessage(`✓ User ${newUser.name} (ID: ${newUser.empId}) created successfully!`);
+      toast.success(`User ${newUser.name} (ID: ${newUser.empId}) created successfully!`);
 
       // Reset form
       setFormData({
@@ -105,15 +121,16 @@ export default function CreateUserPage() {
         email: "",
         password: "",
         phone: "",
-        specialization: ""
+        designation: ""
       });
       setErrors({});
 
-      // Redirect after 2 seconds
+      // Redirect after a moment
       setTimeout(() => {
         navigate("/admin/dashboard");
-      }, 2000);
+      }, 1000);
     } catch (error) {
+      toast.error(error.message || "Error creating user");
       setErrors({
         submit: error.message || "Error creating user"
       });
@@ -147,15 +164,9 @@ export default function CreateUserPage() {
               <p>Fill in the details to create a new employee account</p>
             </div>
 
-            {successMessage && (
-              <div className="success-banner">
-                <span>{successMessage}</span>
-              </div>
-            )}
-
             {errors.submit && (
-              <div className="error-banner">
-                <span>✕ {errors.submit}</span>
+              <div className="error-message">
+                <p>{errors.submit}</p>
               </div>
             )}
 
@@ -213,7 +224,8 @@ export default function CreateUserPage() {
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    placeholder="Enter phone number"
+                    placeholder="Enter 10-digit phone number"
+                    maxLength="13"
                     className={errors.phone ? "input-error" : ""}
                   />
                   {errors.phone && <span className="error-text">{errors.phone}</span>}
@@ -222,20 +234,17 @@ export default function CreateUserPage() {
 
               <div className="form-row">
                 <div className="form-group full-width">
-                  <label htmlFor="specialization">Specialization *</label>
-                  <select
-                    id="specialization"
-                    name="specialization"
-                    value={formData.specialization}
+                  <label htmlFor="designation">Designation *</label>
+                  <input
+                    id="designation"
+                    type="text"
+                    name="designation"
+                    value={formData.designation}
                     onChange={handleChange}
-                    className={errors.specialization ? "input-error" : ""}
-                  >
-                    <option value="">Select a specialization</option>
-                    {specializations.map(spec => (
-                      <option key={spec} value={spec}>{spec}</option>
-                    ))}
-                  </select>
-                  {errors.specialization && <span className="error-text">{errors.specialization}</span>}
+                    placeholder="e.g., Frontend Developer, Backend Developer"
+                    className={errors.designation ? "input-error" : ""}
+                  />
+                  {errors.designation && <span className="error-text">{errors.designation}</span>}
                 </div>
               </div>
 

@@ -78,18 +78,19 @@ The frontend is designed to integrate with your Spring Boot Workly backend:
 
 ### API Integration Points
 
-Update the LoginPage component to connect with your backend:
+All network requests use the base URL defined in the environment variable `VITE_API_URL` via `src/config/api.js`. During development this defaults to `http://localhost:8082` and in production it uses your deployed backend URL.
+
+For example, the login page now calls:
 
 ```javascript
-// In LoginPage.jsx, replace the mock API call with:
-const response = await fetch('https://flowvera-backend.onrender.com/api/auth/login', {
+const response = await fetch(buildApiUrl('/api/auth/login-email'), {
   method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(formData),
 });
 ```
+
+Make sure you set `VITE_API_URL` appropriately in `.env.development` or `.env.production`.
 
 ## Key Features Implemented
 

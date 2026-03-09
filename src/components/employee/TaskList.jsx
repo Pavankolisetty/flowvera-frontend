@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { BarChart3, ArrowRight } from "lucide-react";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 const TaskList = ({ tasks, status }) => {
   const taskCards = useMemo(() => {
@@ -56,7 +58,25 @@ const TaskList = ({ tasks, status }) => {
         <span className="panel-badge">Active</span>
       </div>
       {status.loading ? (
-        <div className="employee-loading">Loading tasks...</div>
+        <div className="employee-tasks">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div className="employee-task-card skeleton-card" key={index}>
+              <div className="task-card-header">
+                <Skeleton width={200} height={20} />
+                <Skeleton width={80} height={24} style={{ borderRadius: 12 }} />
+              </div>
+              <Skeleton width="100%" height={40} style={{ marginBottom: 12 }} />
+              <div className="task-card-meta">
+                <Skeleton width={100} height={14} />
+                <Skeleton width={100} height={14} />
+              </div>
+              <Skeleton width="100%" height={8} style={{ borderRadius: 4, marginBottom: 12 }} />
+              <div className="task-card-action">
+                <Skeleton width={140} height={32} style={{ borderRadius: 6 }} />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : status.error ? (
         <div className="employee-error">{status.error}</div>
       ) : (

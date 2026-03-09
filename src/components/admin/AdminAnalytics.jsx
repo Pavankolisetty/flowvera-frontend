@@ -1,7 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 import { TrendingUp, PieChart, Search, User } from "lucide-react";
 
-const AdminAnalytics = ({ employees, assignments, authFetch, showNotification }) => {
+const AdminAnalytics = ({ employees, assignments, authFetch, showNotification, dataLoading }) => {
   const [searchEmpId, setSearchEmpId] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [selectedAttendance, setSelectedAttendance] = useState([]);
@@ -256,18 +258,39 @@ const AdminAnalytics = ({ employees, assignments, authFetch, showNotification })
               </svg>
             </div>
             <div className="chart-stats">
-              <div className="stat-item">
-                <span className="stat-value">{performanceTrend[performanceTrend.length - 1]?.performance || 0}%</span>
-                <span className="stat-label">Current Performance</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-value">{assignments.length}</span>
-                <span className="stat-label">Total Tasks</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-value">{employees.length}</span>
-                <span className="stat-label">Active Employees</span>
-              </div>
+              {dataLoading ? (
+                <div className="stat-item">
+                  <Skeleton width={60} height={24} />
+                  <Skeleton width={100} height={16} style={{ marginTop: 4 }} />
+                </div>
+              ) : (
+                <div className="stat-item">
+                  <span className="stat-value">{performanceTrend[performanceTrend.length - 1]?.performance || 0}%</span>
+                  <span className="stat-label">Current Performance</span>
+                </div>
+              )}
+              {dataLoading ? (
+                <div className="stat-item">
+                  <Skeleton width={40} height={24} />
+                  <Skeleton width={80} height={16} style={{ marginTop: 4 }} />
+                </div>
+              ) : (
+                <div className="stat-item">
+                  <span className="stat-value">{assignments.length}</span>
+                  <span className="stat-label">Total Tasks</span>
+                </div>
+              )}
+              {dataLoading ? (
+                <div className="stat-item">
+                  <Skeleton width={50} height={24} />
+                  <Skeleton width={120} height={16} style={{ marginTop: 4 }} />
+                </div>
+              ) : (
+                <div className="stat-item">
+                  <span className="stat-value">{employees.length}</span>
+                  <span className="stat-label">Active Employees</span>
+                </div>
+              )}
             </div>
           </div>
             {/* Attendance removed - placeholder shown in employee dashboard */}
@@ -277,58 +300,73 @@ const AdminAnalytics = ({ employees, assignments, authFetch, showNotification })
         <div className="analytics-card">
           <h3><PieChart size={20} /> Individual Employee Performance</h3>
           <div className="employee-performance-circles">
-            {performanceData.map((emp, index) => {
-              const progressPercentage = emp.averageProgress;
-              const radius = 35;
-              const circumference = 2 * Math.PI * radius;
-              // Simple and clear calculation: show exact percentage
-              const strokeDasharray = circumference;
-              const strokeDashoffset = circumference - (progressPercentage / 100) * circumference;
-              
-              return (
-                <div key={emp.empId} className="employee-circle">
+            {dataLoading ? (
+              // Show skeleton circles for loading state
+              Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="employee-circle">
                   <div className="circle-container">
-                    <svg width="80" height="80" className="progress-ring">
-                      {/* Background circle */}
-                      <circle
-                        cx="40"
-                        cy="40"
-                        r={radius}
-                        stroke="#e2e8f0"
-                        strokeWidth="8"
-                        fill="none"
-                      />
-                      {/* Progress circle */}
-                      <circle
-                        cx="40"
-                        cy="40"
-                        r={radius}
-                        stroke={progressPercentage >= 75 ? '#22c55e' : progressPercentage >= 50 ? '#f59e0b' : '#ef4444'}
-                        strokeWidth="8"
-                        fill="none"
-                        strokeDasharray={strokeDasharray}
-                        strokeDashoffset={strokeDashoffset}
-                        strokeLinecap="round"
-                        transform="rotate(-90 40 40)"
-                        className="progress-circle"
-                        style={{
-                          transition: 'stroke-dashoffset 0.6s ease-in-out'
-                        }}
-                      />
-                    </svg>
-                    <div className="circle-text">
-                      <span className="percentage">{progressPercentage}%</span>
-                    </div>
+                    <Skeleton circle width={80} height={80} />
                   </div>
                   <div className="employee-info">
-                    <span className="employee-name">{emp.name}</span>
-                    <span className="task-count">
-                      {emp.totalTasks > 0 ? `${emp.totalTasks} tasks` : 'No tasks assigned'}
-                    </span>
+                    <Skeleton width={120} height={16} />
+                    <Skeleton width={80} height={14} style={{ marginTop: 4 }} />
                   </div>
                 </div>
-              );
-            })}
+              ))
+            ) : (
+              performanceData.map((emp, index) => {
+                const progressPercentage = emp.averageProgress;
+                const radius = 35;
+                const circumference = 2 * Math.PI * radius;
+                // Simple and clear calculation: show exact percentage
+                const strokeDasharray = circumference;
+                const strokeDashoffset = circumference - (progressPercentage / 100) * circumference;
+                
+                return (
+                  <div key={emp.empId} className="employee-circle">
+                    <div className="circle-container">
+                      <svg width="80" height="80" className="progress-ring">
+                        {/* Background circle */}
+                        <circle
+                          cx="40"
+                          cy="40"
+                          r={radius}
+                          stroke="#e2e8f0"
+                          strokeWidth="8"
+                          fill="none"
+                        />
+                        {/* Progress circle */}
+                        <circle
+                          cx="40"
+                          cy="40"
+                          r={radius}
+                          stroke={progressPercentage >= 75 ? '#22c55e' : progressPercentage >= 50 ? '#f59e0b' : '#ef4444'}
+                          strokeWidth="8"
+                          fill="none"
+                          strokeDasharray={strokeDasharray}
+                          strokeDashoffset={strokeDashoffset}
+                          strokeLinecap="round"
+                          transform="rotate(-90 40 40)"
+                          className="progress-circle"
+                          style={{
+                            transition: 'stroke-dashoffset 0.6s ease-in-out'
+                          }}
+                        />
+                      </svg>
+                      <div className="circle-text">
+                        <span className="percentage">{progressPercentage}%</span>
+                      </div>
+                    </div>
+                    <div className="employee-info">
+                      <span className="employee-name">{emp.name}</span>
+                      <span className="task-count">
+                        {emp.totalTasks > 0 ? `${emp.totalTasks} tasks` : 'No tasks assigned'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       </div>

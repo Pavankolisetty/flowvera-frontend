@@ -1,9 +1,17 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import { ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react"
+import { ArrowLeft, Eye, EyeOff } from "lucide-react"
 import { buildApiUrl } from "../config/api"
 import { useAuth } from "../context/AuthContext"
 import "../styles/LoginPage.css"
+
+const LOGIN_STATUS_MESSAGES = [
+  "Verifying credentials...",
+  "Connecting to secure server...",
+  "Preparing your workspace...",
+  "Almost ready...",
+]
+const normalizeRole = (role) => String(role || "").trim().toUpperCase()
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -12,6 +20,7 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
+  const [statusIndex, setStatusIndex] = useState(0)
   const navigate = useNavigate()
   const location = useLocation()
   const { login } = useAuth()
@@ -24,6 +33,19 @@ export default function LoginPage() {
       window.history.replaceState({}, document.title)
     }
   }, [location])
+
+  useEffect(() => {
+    if (!isSubmitting) {
+      setStatusIndex(0)
+      return undefined
+    }
+
+    const timer = window.setInterval(() => {
+      setStatusIndex((prev) => (prev + 1) % LOGIN_STATUS_MESSAGES.length)
+    }, 4000)
+
+    return () => window.clearInterval(timer)
+  }, [isSubmitting])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -46,7 +68,8 @@ export default function LoginPage() {
       login(data)
       
       // Redirect based on user role
-      if (data.role === "ADMIN") {
+      const role = normalizeRole(data.role)
+      if (role === "ADMIN") {
         navigate("/admin/dashboard")
       } else {
         navigate("/employee/dashboard")
@@ -136,8 +159,20 @@ export default function LoginPage() {
             {error && <div className="auth-error">{error}</div>}
 
             <button type="submit" className="auth-submit-btn" disabled={isSubmitting}>
-              {isSubmitting ? "Signing in..." : "Sign in"}
+              {isSubmitting ? "Signing you in..." : "Sign in"}
             </button>
+
+            {isSubmitting && (
+              <div className="signin-progress-panel" role="status" aria-live="polite">
+                <div className="signin-progress-header">
+                  <span className="signin-spinner" aria-hidden="true"></span>
+                  <strong>Secure sign in in progress</strong>
+                </div>
+                <p className="signin-progress-message">
+                  {LOGIN_STATUS_MESSAGES[statusIndex]}
+                </p>
+              </div>
+            )}
           </form>
 
           <div className="auth-footer-note">

@@ -170,13 +170,15 @@
 
 .form-group input,
 .form-group select {
-  padding: 10px 12px;
-  border: 1px solid #d1d5db;
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #d1d5db;
   border-radius: 8px;
   font-family: inherit;
   font-size: 14px;
   transition: all 0.2s ease;
   background: white;
+  box-sizing: border-box;
 }
 
 .form-group input:focus,
@@ -201,6 +203,21 @@
   margin-top: 6px;
   font-size: 13px;
   color: #ef4444;
+  font-weight: 500;
+}
+
+.error-message {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid #ef4444;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.error-message p {
+  margin: 0;
+  color: #ef4444;
+  font-size: 14px;
   font-weight: 500;
 }
 

@@ -1,4 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { toast } from "react-hot-toast";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import AdminAnalytics from "../components/admin/AdminAnalytics";
@@ -12,47 +15,33 @@ import "../styles/AdminDashboard.css";
 export default function AdminDashboard() {
   const { authFetch, user, logout } = useAuth();
   const navigate = useNavigate();
-  const timeoutRef = useRef(null);
 
   const [activeTab, setActiveTab] = useState("stats");
   const [tasks, setTasks] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [assignments, setAssignments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [notification, setNotification] = useState(null);
-
+  const [dataLoading, setDataLoading] = useState(true);
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
+  // use react-hot-toast for notifications
   const showNotification = useCallback((message, type = "success") => {
-    // Clear previous timer if exists
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
+    if (type === "error") {
+      toast.error(message);
+    } else {
+      toast.success(message);
     }
-
-    setNotification({ message, type });
-
-    timeoutRef.current = setTimeout(() => {
-      setNotification(null);
-      timeoutRef.current = null;
-    }, 5000); // 5 seconds
   }, []);
 
   useEffect(() => {
     loadData();
-
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
   }, [authFetch]);
 
   const loadData = async () => {
     try {
-      setLoading(true);
+      setDataLoading(true);
 
       const [tasksResponse, employeesResponse, assignmentsResponse] =
         await Promise.all([
@@ -79,46 +68,13 @@ export default function AdminDashboard() {
       console.error("Failed to load data:", error);
       showNotification("Failed to load dashboard data", "error");
     } finally {
-      setLoading(false);
+      setDataLoading(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="admin-dashboard">
-        <div className="admin-header">
-          <h1>Admin Dashboard</h1>
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="admin-dashboard">
       <div className="dashboard-bg"></div>
-
-      {notification && (
-        <div className={`notification ${notification.type}`}>
-          <div className="notification-content">
-            <span className="notification-message">
-              {notification.message}
-            </span>
-            <button
-              className="notification-close"
-              onClick={() => {
-                if (timeoutRef.current) {
-                  clearTimeout(timeoutRef.current);
-                  timeoutRef.current = null;
-                }
-                setNotification(null);
-              }}
-            >
-              ×
-            </button>
-          </div>
-        </div>
-      )}
 
       <div className="admin-shell">
         <div className="admin-header">
@@ -190,6 +146,7 @@ export default function AdminDashboard() {
               assignments={assignments}
               authFetch={authFetch}
               showNotification={showNotification}
+              dataLoading={dataLoading}
             />
           )}
 
