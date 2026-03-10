@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { toast } from "react-hot-toast";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { useAuth } from "../context/AuthContext";
@@ -21,6 +20,8 @@ export default function AdminDashboard() {
   const [employees, setEmployees] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const [notification, setNotification] = useState(null);
+  const notificationTimer = useRef(null);
   const handleLogout = () => {
     logout();
     navigate("/login");
@@ -28,11 +29,14 @@ export default function AdminDashboard() {
 
   // use react-hot-toast for notifications
   const showNotification = useCallback((message, type = "success") => {
-    if (type === "error") {
-      toast.error(message);
-    } else {
-      toast.success(message);
+    if (notificationTimer.current) {
+      clearTimeout(notificationTimer.current);
     }
+    setNotification({ message, type });
+    notificationTimer.current = setTimeout(() => {
+      setNotification(null);
+      notificationTimer.current = null;
+    }, 3200);
   }, []);
 
   useEffect(() => {
@@ -183,6 +187,31 @@ export default function AdminDashboard() {
       </div>
 
       <FeedbackForm userType="admin" />
+
+      {notification && (
+        <div
+          className="notification-backdrop"
+          onClick={() => setNotification(null)}
+        >
+          <div
+            className={`notification ${notification.type}`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              className="notification-close"
+              onClick={() => setNotification(null)}
+              aria-label="Close notification"
+            >
+              &times;
+            </button>
+            <div className="notification-content">
+              <div className="notification-message">
+                {notification.message}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

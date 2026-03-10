@@ -1,5 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Upload, X } from "lucide-react";
+
+const ASSIGN_STATUS_MESSAGES = [
+  "Validating task details...",
+  "Assigning task to employee...",
+  "Securing documents...",
+  "Updating dashboard view..."
+];
 
 const AdminTaskManagement = ({ employees, authFetch, showNotification, loadData }) => {
   const [taskForm, setTaskForm] = useState({
@@ -10,6 +17,16 @@ const AdminTaskManagement = ({ employees, authFetch, showNotification, loadData 
     requiresSubmission: false
   });
   const [selectedFile, setSelectedFile] = useState(null);
+  const [assigning, setAssigning] = useState(false);
+  const [assignMessageIndex, setAssignMessageIndex] = useState(0);
+
+  useEffect(() => {
+    if (!assigning) return;
+    const timer = setInterval(() => {
+      setAssignMessageIndex((prev) => (prev + 1) % ASSIGN_STATUS_MESSAGES.length);
+    }, 1200);
+    return () => clearInterval(timer);
+  }, [assigning]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -47,6 +64,8 @@ const AdminTaskManagement = ({ employees, authFetch, showNotification, loadData 
     }
 
     try {
+      setAssigning(true);
+      setAssignMessageIndex(0);
       let createdTask;
       
       if (selectedFile) {
@@ -94,7 +113,8 @@ const AdminTaskManagement = ({ employees, authFetch, showNotification, loadData 
           body: JSON.stringify({
             taskId: createdTask.id,
             empId: taskForm.empId,
-            dueDate: taskForm.dueDate
+            dueDate: taskForm.dueDate,
+            requiresSubmission: taskForm.requiresSubmission
           })
         });
 
@@ -114,7 +134,7 @@ const AdminTaskManagement = ({ employees, authFetch, showNotification, loadData 
       setSelectedFile(null);
       
       // Show success notification
-      showNotification(`✓ Task ${selectedFile ? 'with document ' : ''}successfully created and assigned!`, 'success');
+      showNotification(`Task ${selectedFile ? 'with document ' : ''}successfully created and assigned!`, 'success');
       
       // Reset file input
       const fileInput = document.getElementById('task-file-input');
@@ -126,12 +146,29 @@ const AdminTaskManagement = ({ employees, authFetch, showNotification, loadData 
       }
     } catch (error) {
       console.error("Error creating/assigning task:", error);
-      showNotification("❌ Failed to create or assign task. Please try again.", 'error');
+      showNotification("Failed to create or assign task. Please try again.", 'error');
+    } finally {
+      setAssigning(false);
     }
   };
 
   return (
     <div className="task-management-panel">
+      {assigning && (
+        <div className="assigning-overlay" role="status" aria-live="polite">
+          <div className="assigning-card">
+            <div className="assigning-title">Creating and assigning task</div>
+            <div className="assigning-message">
+              {ASSIGN_STATUS_MESSAGES[assignMessageIndex]}
+            </div>
+            <div className="assigning-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        </div>
+      )}
       <h2>Task Management</h2>
       
       <form onSubmit={handleCreateAndAssignTask} className="task-form">
@@ -232,9 +269,9 @@ const AdminTaskManagement = ({ employees, authFetch, showNotification, loadData 
           </p>
         </div>
 
-        <button type="submit" className="assign-btn">
+        <button type="submit" className="assign-btn" disabled={assigning}>
           <Plus size={16} />
-          Create & Assign Task
+          {assigning ? "Creating Task..." : "Create & Assign Task"}
         </button>
       </form>
       

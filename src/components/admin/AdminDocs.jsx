@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { FileText, Download } from "lucide-react";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 const AdminDocs = ({ authFetch, showNotification }) => {
   const [assignedDocs, setAssignedDocs] = useState([]);
@@ -119,7 +121,32 @@ const AdminDocs = ({ authFetch, showNotification }) => {
   );
 
   if (loading) {
-    return <div className="docs-loading">Loading documents...</div>;
+    return (
+      <div className="docs-content">
+        <div className="docs-horizontal-layout">
+          {Array.from({ length: 2 }).map((_, colIndex) => (
+            <div className="docs-section-half" key={colIndex}>
+              <div className="docs-skeleton-header">
+                <Skeleton width={180} height={18} />
+              </div>
+              <div className="docs-skeleton-grid">
+                {Array.from({ length: 6 }).map((__, cardIndex) => (
+                  <div className="docs-skeleton-card" key={cardIndex}>
+                    <div className="docs-skeleton-row">
+                      <Skeleton width={160} height={16} />
+                    </div>
+                    <Skeleton width="100%" height={12} style={{ marginBottom: 8 }} />
+                    <Skeleton width="80%" height={12} style={{ marginBottom: 8 }} />
+                    <Skeleton width="70%" height={12} />
+                    <Skeleton width="100%" height={34} style={{ marginTop: 12, borderRadius: 8 }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
