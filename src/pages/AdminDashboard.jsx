@@ -57,16 +57,22 @@ export default function AdminDashboard() {
       if (tasksResponse.ok) {
         const tasksData = await tasksResponse.json();
         setTasks(tasksData || []);
+      } else {
+        showNotification(`Failed to load tasks (status ${tasksResponse.status})`, "error");
       }
 
       if (employeesResponse.ok) {
         const employeesData = await employeesResponse.json();
         setEmployees(employeesData || []);
+      } else {
+        showNotification(`Failed to load employees (status ${employeesResponse.status})`, "error");
       }
 
       if (assignmentsResponse.ok) {
         const assignmentsData = await assignmentsResponse.json();
         setAssignments(assignmentsData || []);
+      } else {
+        showNotification(`Failed to load assignments (status ${assignmentsResponse.status})`, "error");
       }
     } catch (error) {
       console.error("Failed to load data:", error);

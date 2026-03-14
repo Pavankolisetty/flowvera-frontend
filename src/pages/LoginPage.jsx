@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
+import { useNavigate, useLocation, Link } from "react-router-dom"
 import { ArrowLeft, Eye, EyeOff } from "lucide-react"
 import { buildApiUrl } from "../config/api"
 import { useAuth } from "../context/AuthContext"
@@ -151,9 +151,9 @@ export default function LoginPage() {
                 <span className="checkmark"></span>
                 Keep me signed in
               </label>
-              <a href="#" className="forgot-password">
-                Contact Admin
-              </a>
+              <Link to="/forgot-password" className="forgot-password">
+                Forgot Password?
+              </Link>
             </div>
 
             {error && <div className="auth-error">{error}</div>}

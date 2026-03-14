@@ -3,6 +3,7 @@ import { Toaster } from "react-hot-toast";
 
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 
 import EmployeeDashboard from "./pages/EmployeeDashboard";
 import EmployeeTasksPage from "./pages/EmployeeTasksPage";
@@ -102,6 +103,7 @@ export default function App() {
         {/* Public Routes */}
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
 
         {/* =========================

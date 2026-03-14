@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { X, Plus, Loader } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
+import CountrySelect from "../shared/CountrySelect";
 import "../../styles/CreateUserModal.css";
 
 const CreateUserModal = ({ isOpen, onClose, authFetch }) => {
@@ -8,16 +10,29 @@ const CreateUserModal = ({ isOpen, onClose, authFetch }) => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    empId: "",
-    password: "",
     phone: "",
+    phoneCountryIso: "IN",
     designation: ""
   });
 
   const [loading, setLoading] = useState(false);
+  const [verifyingEmail, setVerifyingEmail] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [verificationToken, setVerificationToken] = useState("");
   const [errors, setErrors] = useState({});
 
   const allowedDomains = ["gmail.com", "outlook.com", "yahoo.com", "zoho.com"];
+
+  const countryOptions = useMemo(() => ([
+    { iso: "IN", name: "India", dialCode: "+91" },
+    { iso: "US", name: "United States", dialCode: "+1" },
+    { iso: "GB", name: "United Kingdom", dialCode: "+44" },
+    { iso: "AE", name: "United Arab Emirates", dialCode: "+971" },
+    { iso: "SG", name: "Singapore", dialCode: "+65" },
+    { iso: "AU", name: "Australia", dialCode: "+61" },
+    { iso: "CA", name: "Canada", dialCode: "+1" },
+    { iso: "DE", name: "Germany", dialCode: "+49" }
+  ]), []);
 
   const isValidEmailDomain = (email) => {
     const domain = email.split("@")[1]?.toLowerCase();
@@ -42,26 +57,18 @@ const CreateUserModal = ({ isOpen, onClose, authFetch }) => {
       newErrors.email = "Only Gmail, Outlook, Yahoo, Zoho allowed";
     }
 
-    if (!formData.empId.trim()) {
-      newErrors.empId = "Employee ID is required";
-    }
-
-    if (!formData.password.trim()) {
-      newErrors.password = "Password is required";
-    } 
-    else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
-
     if (!formData.phone.trim()) {
       newErrors.phone = "Phone number required";
     } 
-    else if (!/^\d{10}$/.test(formData.phone)) {
-      newErrors.phone = "Phone must be 10 digits";
+    else if (!isValidPhone(formData.phone, formData.phoneCountryIso)) {
+      newErrors.phone = "Invalid phone number for selected country";
     }
 
     if (!formData.designation.trim()) {
       newErrors.designation = "Designation required";
+    }
+    if (!emailVerified) {
+      newErrors.email = newErrors.email || "Email must be verified before creating a user";
     }
 
     setErrors(newErrors);
@@ -82,8 +89,6 @@ const CreateUserModal = ({ isOpen, onClose, authFetch }) => {
 
       const digits = value.replace(/\D/g, "");
 
-      if (digits.length > 10) return;
-
       setFormData(prev => ({
         ...prev,
         phone: digits
@@ -103,6 +108,56 @@ const CreateUserModal = ({ isOpen, onClose, authFetch }) => {
         [name]: ""
       }));
     }
+
+    if (name === "email") {
+      setEmailVerified(false);
+      setVerificationToken("");
+    }
+  };
+
+  const isValidPhone = (phone, iso) => {
+    const parsed = parsePhoneNumberFromString(phone, iso);
+    return parsed ? parsed.isValid() : false;
+  };
+
+  const isEmailFormatValid = formData.email.trim()
+    && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+    && isValidEmailDomain(formData.email);
+
+  const handleVerifyEmail = async () => {
+    if (!isEmailFormatValid) {
+      toast.error("Enter a valid email before verifying");
+      return;
+    }
+
+    setVerifyingEmail(true);
+    try {
+      const response = await authFetch("/api/admin/verify-email", {
+        method: "POST",
+        body: JSON.stringify({
+          email: formData.email,
+          name: formData.name
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({
+          message: "Failed to verify email"
+        }));
+        throw new Error(errorData.message);
+      }
+
+      const data = await response.json();
+      setVerificationToken(data.verificationToken);
+      setEmailVerified(true);
+      toast.success("Verification email sent");
+    } catch (error) {
+      setEmailVerified(false);
+      setVerificationToken("");
+      toast.error(error.message || "Failed to verify email");
+    } finally {
+      setVerifyingEmail(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -115,8 +170,19 @@ const CreateUserModal = ({ isOpen, onClose, authFetch }) => {
 
     try {
 
+      const selectedCountry = countryOptions.find(option => option.iso === formData.phoneCountryIso);
+      const parsedPhone = parsePhoneNumberFromString(formData.phone, formData.phoneCountryIso);
+      if (!parsedPhone || !parsedPhone.isValid()) {
+        throw new Error("Invalid phone number for selected country");
+      }
+
       const payload = {
-        ...formData
+        name: formData.name,
+        email: formData.email,
+        phone: parsedPhone.format("E.164"),
+        phoneCountryCode: selectedCountry?.dialCode || "",
+        designation: formData.designation,
+        verificationToken
       };
 
       const response = await authFetch("/api/admin/create-user", {
@@ -140,12 +206,13 @@ const CreateUserModal = ({ isOpen, onClose, authFetch }) => {
       setFormData({
         name: "",
         email: "",
-        empId: "",
-        password: "",
         phone: "",
+        phoneCountryIso: "IN",
         designation: ""
       });
 
+      setEmailVerified(false);
+      setVerificationToken("");
       setErrors({});
 
       onClose();
@@ -197,53 +264,51 @@ const CreateUserModal = ({ isOpen, onClose, authFetch }) => {
 
           <div className="form-group">
             <label>Email *</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter email"
-              className={errors.email ? "input-error" : ""}
-            />
+            <div className="email-verify-row">
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Enter email"
+                className={errors.email ? "input-error" : ""}
+              />
+              <button
+                type="button"
+                className="btn-verify"
+                onClick={handleVerifyEmail}
+                disabled={verifyingEmail || emailVerified || !isEmailFormatValid}
+              >
+                {verifyingEmail ? "Verifying..." : emailVerified ? "Verified" : "Verify Email"}
+              </button>
+            </div>
             {errors.email && <span className="error-text">{errors.email}</span>}
+            <span className="helper-text">
+              Allowed email domains: gmail.com, outlook.com, yahoo.com, zoho.com
+            </span>
+            {emailVerified && <span className="verified-badge">Email verified</span>}
           </div>
-
-          <div className="form-group">
-            <label>Employee ID *</label>
-            <input
-              type="text"
-              name="empId"
-              value={formData.empId}
-              onChange={handleChange}
-              placeholder="Enter employee ID"
-              className={errors.empId ? "input-error" : ""}
-            />
-            {errors.empId && <span className="error-text">{errors.empId}</span>}
-          </div>
-
-          <div className="form-group">
-            <label>Password *</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Min 6 characters"
-              className={errors.password ? "input-error" : ""}
-            />            {errors.password && <span className="error-text">{errors.password}</span>}          </div>
 
           <div className="form-group">
             <label>Phone *</label>
 
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="Enter 10 digit number"
-              maxLength={10}
-              className={errors.phone ? "input-error" : ""}
-            />
+            <div className="phone-input-row">
+              <CountrySelect
+                name="phoneCountryIso"
+                value={formData.phoneCountryIso}
+                onChange={handleChange}
+                options={countryOptions}
+                hasError={Boolean(errors.phone)}
+              />
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="Enter phone number"
+                className={errors.phone ? "input-error" : ""}
+              />
+            </div>
             {errors.phone && <span className="error-text">{errors.phone}</span>}
 
           </div>
@@ -275,7 +340,7 @@ const CreateUserModal = ({ isOpen, onClose, authFetch }) => {
             <button
               type="submit"
               className="btn-submit"
-              disabled={loading}
+              disabled={loading || !emailVerified || verifyingEmail}
             >
 
               {loading ? (
