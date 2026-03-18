@@ -11,6 +11,10 @@ export default function EmployeeDashboard() {
   const { authFetch, user } = useAuth();
   const [profileName, setProfileName] = useState(user?.name || "");
   const [tasks, setTasks] = useState([]);
+  const [taskNotifications, setTaskNotifications] = useState({
+    hasAccepted: false,
+    hasChanges: false,
+  });
   const [status, setStatus] = useState({ loading: true, error: "" });
 
   useEffect(() => {
@@ -18,9 +22,10 @@ export default function EmployeeDashboard() {
 
     const loadDashboard = async () => {
       try {
-        const [profileResponse, tasksResponse] = await Promise.all([
+        const [profileResponse, tasksResponse, allTasksResponse] = await Promise.all([
           authFetch("/api/employee/me"),
           authFetch("/api/employee/my-tasks/active"),
+          authFetch("/api/employee/my-tasks"),
         ]);
 
         if (!profileResponse.ok) {
@@ -33,12 +38,28 @@ export default function EmployeeDashboard() {
           throw new Error(message || "Failed to load tasks");
         }
 
+        if (!allTasksResponse.ok) {
+          const message = await allTasksResponse.text();
+          throw new Error(message || "Failed to load task notifications");
+        }
+
         const profileData = await profileResponse.json();
         const tasksData = await tasksResponse.json();
+        const allTasksData = await allTasksResponse.json();
 
         if (isMounted) {
           setProfileName(profileData.name || user?.name || "");
           setTasks(tasksData || []);
+          setTaskNotifications({
+            hasAccepted: (allTasksData || []).some(
+              (task) => task.employeeNotificationUnread && task.employeeCelebrationPending
+            ),
+            hasChanges: (allTasksData || []).some(
+              (task) =>
+                task.employeeNotificationUnread &&
+                task.status === "CHANGES_REQUESTED"
+            ),
+          });
           setStatus({ loading: false, error: "" });
         }
       } catch (error) {
@@ -59,7 +80,7 @@ export default function EmployeeDashboard() {
     <div className="employee-dashboard">
       <div className="dashboard-bg" aria-hidden="true"></div>
       <div className="employee-shell">
-        <EmployeeHeader name={profileName} />
+        <EmployeeHeader name={profileName} taskNotifications={taskNotifications} />
 
         <QuoteSection />
 

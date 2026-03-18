@@ -105,6 +105,27 @@
   overflow: hidden;
 }
 
+.nav-notification-dots {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: 4px;
+}
+
+.nav-notification-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.45);
+}
+
+.nav-notification-dot.warning {
+  background: #f59e0b;
+}
+
+.nav-notification-dot.success {
+  background: #10b981;
+}
+
 .nav-arrow {
   opacity: 0;
   transform: scale(0.8);
@@ -306,6 +327,16 @@
 .task-status.completed {
   background: rgba(92, 164, 132, 0.22);
   color: #2a5a44;
+}
+
+.task-status.review {
+  background: rgba(59, 130, 246, 0.16);
+  color: #1d4ed8;
+}
+
+.task-status.changes_requested {
+  background: rgba(245, 158, 11, 0.18);
+  color: #b45309;
 }
 
 .task-card-desc {
@@ -694,6 +725,24 @@
   border-top: 1px solid rgba(31, 41, 51, 0.08);
 }
 
+.task-review-summary {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(245, 158, 11, 0.1);
+  color: #7c4a03;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.task-review-summary.neutral {
+  background: rgba(59, 130, 246, 0.1);
+  color: #1d4ed8;
+}
+
 .update-progress-btn {
   display: flex;
   align-items: center;
@@ -822,6 +871,57 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
+}
+
+.task-review-panel {
+  margin-top: 18px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.14);
+}
+
+.task-review-panel.waiting {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.14);
+}
+
+.task-review-panel.feedback {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.16);
+}
+
+.task-review-panel.accepted {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.16);
+}
+
+.task-review-panel.neutral {
+  background: rgba(31, 41, 51, 0.05);
+  border-color: rgba(31, 41, 51, 0.08);
+}
+
+.task-review-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.task-review-panel p,
+.task-review-panel small {
+  margin: 0;
+  color: #47515c;
+  line-height: 1.6;
+}
+
+.task-review-panel small {
+  display: block;
+  margin-top: 8px;
 }
 
 .task-action-btn {

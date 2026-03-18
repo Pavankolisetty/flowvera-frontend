@@ -9,7 +9,7 @@ const getGreeting = () => {
   return "Good evening";
 };
 
-export default function EmployeeHeader({ name }) {
+export default function EmployeeHeader({ name, taskNotifications = {} }) {
   const { logout } = useAuth();
 
   const handleLogout = () => {
@@ -43,6 +43,14 @@ export default function EmployeeHeader({ name }) {
           >
             <ChevronLeft className="nav-arrow left" size={16} />
             Tasks
+            <span className="nav-notification-dots">
+              {taskNotifications.hasChanges && (
+                <span className="nav-notification-dot warning" aria-label="Improvement request pending"></span>
+              )}
+              {taskNotifications.hasAccepted && (
+                <span className="nav-notification-dot success" aria-label="Accepted work notification pending"></span>
+              )}
+            </span>
             <ChevronRight className="nav-arrow right" size={16} />
           </NavLink>
           <NavLink

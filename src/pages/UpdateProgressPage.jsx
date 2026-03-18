@@ -67,6 +67,14 @@ export default function UpdateProgressPage() {
   const handleSubmitProgress = async () => {
     if (selectedProgress === null) return;
 
+    if (assignment?.requiresSubmission && assignment?.submissionDocPath) {
+      setStatus((prev) => ({
+        ...prev,
+        error: "A document has already been submitted for review. Please wait for the administrator's response or resubmit the document if changes were requested.",
+      }));
+      return;
+    }
+
     setStatus(prev => ({ ...prev, updating: true }));
 
     try {
@@ -171,6 +179,9 @@ export default function UpdateProgressPage() {
               <p><strong>Task:</strong> {assignment?.task?.title}</p>
               <p><strong>Description:</strong> {assignment?.task?.description}</p>
               <p><strong>Due Date:</strong> {assignment?.dueDate ? new Date(assignment.dueDate).toLocaleDateString() : 'No deadline'}</p>
+              {assignment?.requiresSubmission && (
+                <p><strong>Submission Workflow:</strong> This task is completed only after the administrator accepts the submitted document.</p>
+              )}
             </div>
             
             <div className="progress-options">

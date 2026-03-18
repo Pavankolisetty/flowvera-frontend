@@ -43,6 +43,31 @@ export default function AdminDashboard() {
     loadData();
   }, [authFetch]);
 
+  const unreadSubmissionReviews = assignments.filter(
+    (assignment) => assignment.adminNotificationUnread && assignment.adminNotificationMessage
+  );
+
+  const handleTabChange = async (tab) => {
+    setActiveTab(tab);
+
+    if (tab !== "docs" || !unreadSubmissionReviews.length) {
+      return;
+    }
+
+    const leadAssignment = unreadSubmissionReviews[0];
+    const message = unreadSubmissionReviews.length === 1
+      ? leadAssignment.adminNotificationMessage
+      : `${leadAssignment.adminNotificationMessage} You also have ${unreadSubmissionReviews.length - 1} more submission review${unreadSubmissionReviews.length > 2 ? "s" : ""} pending.`;
+
+    showNotification(message, "success");
+    try {
+      await authFetch("/api/admin/notifications/read", { method: "PUT" });
+      await loadData();
+    } catch (error) {
+      console.error("Failed to mark admin notifications as read:", error);
+    }
+  };
+
   const loadData = async () => {
     try {
       setDataLoading(true);
@@ -101,7 +126,7 @@ export default function AdminDashboard() {
                 className={`admin-nav-link ${
                   activeTab === "stats" ? "active" : ""
                 }`}
-                onClick={() => setActiveTab("stats")}
+                onClick={() => handleTabChange("stats")}
               >
                 Analytics
               </button>
@@ -110,16 +135,19 @@ export default function AdminDashboard() {
                 className={`admin-nav-link ${
                   activeTab === "docs" ? "active" : ""
                 }`}
-                onClick={() => setActiveTab("docs")}
+                onClick={() => handleTabChange("docs")}
               >
                 Documents
+                {unreadSubmissionReviews.length > 0 && (
+                  <span className="admin-tab-dot" aria-label="New submission notifications"></span>
+                )}
               </button>
 
               <button
                 className={`admin-nav-link ${
                   activeTab === "task-management" ? "active" : ""
                 }`}
-                onClick={() => setActiveTab("task-management")}
+                onClick={() => handleTabChange("task-management")}
               >
                 Task Management
               </button>
@@ -128,7 +156,7 @@ export default function AdminDashboard() {
                 className={`admin-nav-link ${
                   activeTab === "profile" ? "active" : ""
                 }`}
-                onClick={() => setActiveTab("profile")}
+                onClick={() => handleTabChange("profile")}
               >
                 Profile
               </button>
@@ -137,7 +165,7 @@ export default function AdminDashboard() {
                 className={`admin-nav-link ${
                   activeTab === "feedback" ? "active" : ""
                 }`}
-                onClick={() => setActiveTab("feedback")}
+                onClick={() => handleTabChange("feedback")}
               >
                 Feedback
               </button>
@@ -164,6 +192,7 @@ export default function AdminDashboard() {
             <AdminDocs
               authFetch={authFetch}
               showNotification={showNotification}
+              loadData={loadData}
             />
           )}
 
