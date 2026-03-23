@@ -1,6 +1,7 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import AccountMenu from "./shared/AccountMenu";
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -10,7 +11,8 @@ const getGreeting = () => {
 };
 
 export default function EmployeeHeader({ name, taskNotifications = {} }) {
-  const { logout } = useAuth();
+  const { logout, user: authUser } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
@@ -20,7 +22,7 @@ export default function EmployeeHeader({ name, taskNotifications = {} }) {
     <header className="employee-header">
       <div className="employee-greeting">
         <span className="greeting-prefix">{getGreeting()},</span>
-        <span className="greeting-name">{name || "Employee"}</span>
+        <span className="greeting-name">{authUser?.name || name || "Employee"}</span>
       </div>
 
       <nav className="employee-nav">
@@ -44,6 +46,9 @@ export default function EmployeeHeader({ name, taskNotifications = {} }) {
             <ChevronLeft className="nav-arrow left" size={16} />
             Tasks
             <span className="nav-notification-dots">
+              {taskNotifications.hasDelegated && (
+                <span className="nav-notification-dot info" aria-label="Delegated task review update pending"></span>
+              )}
               {taskNotifications.hasChanges && (
                 <span className="nav-notification-dot warning" aria-label="Improvement request pending"></span>
               )}
@@ -53,17 +58,12 @@ export default function EmployeeHeader({ name, taskNotifications = {} }) {
             </span>
             <ChevronRight className="nav-arrow right" size={16} />
           </NavLink>
-          <NavLink
-            to="/employee/profile"
-            className={({ isActive }) =>
-              `employee-nav-link${isActive ? " active" : ""}`
-            }
-          >
-            <ChevronLeft className="nav-arrow left" size={16} />
-            Profile
-            <ChevronRight className="nav-arrow right" size={16} />
-          </NavLink>
         </div>
+        <AccountMenu
+          user={authUser}
+          onOpenProfile={() => navigate("/employee/profile")}
+          onOpenPassword={() => navigate("/employee/update-password")}
+        />
         <button className="logout-btn" onClick={handleLogout}>
           <LogOut size={16} />
           Logout

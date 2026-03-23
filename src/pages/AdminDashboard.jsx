@@ -1,14 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import Skeleton from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import AdminAnalytics from "../components/admin/AdminAnalytics";
 import AdminDocs from "../components/admin/AdminDocs";
 import AdminTaskManagement from "../components/admin/AdminTaskManagement";
-import UserProfile from "../components/shared/UserProfile";
 import FeedbackForm from "../components/shared/FeedbackForm";
 import FeedbackViewer from "../components/admin/FeedbackViewer";
+import AccountMenu from "../components/shared/AccountMenu";
 import "../styles/AdminDashboard.css";
 
 export default function AdminDashboard() {
@@ -22,6 +20,10 @@ export default function AdminDashboard() {
   const [dataLoading, setDataLoading] = useState(true);
   const [notification, setNotification] = useState(null);
   const notificationTimer = useRef(null);
+  const isAdminAssigner = useCallback(
+    (empId) => employees.some((employee) => employee.empId === empId && employee.role === "ADMIN"),
+    [employees]
+  );
   const handleLogout = () => {
     logout();
     navigate("/login");
@@ -44,7 +46,10 @@ export default function AdminDashboard() {
   }, [authFetch]);
 
   const unreadSubmissionReviews = assignments.filter(
-    (assignment) => assignment.adminNotificationUnread && assignment.adminNotificationMessage
+    (assignment) =>
+      assignment.adminNotificationUnread &&
+      assignment.adminNotificationMessage &&
+      isAdminAssigner(assignment.assignedBy)
   );
 
   const handleTabChange = async (tab) => {
@@ -137,7 +142,7 @@ export default function AdminDashboard() {
                 }`}
                 onClick={() => handleTabChange("docs")}
               >
-                Documents
+                Task Operations
                 {unreadSubmissionReviews.length > 0 && (
                   <span className="admin-tab-dot" aria-label="New submission notifications"></span>
                 )}
@@ -154,15 +159,6 @@ export default function AdminDashboard() {
 
               <button
                 className={`admin-nav-link ${
-                  activeTab === "profile" ? "active" : ""
-                }`}
-                onClick={() => handleTabChange("profile")}
-              >
-                Profile
-              </button>
-
-              <button
-                className={`admin-nav-link ${
                   activeTab === "feedback" ? "active" : ""
                 }`}
                 onClick={() => handleTabChange("feedback")}
@@ -170,6 +166,13 @@ export default function AdminDashboard() {
                 Feedback
               </button>
 
+              <AccountMenu
+                user={user}
+                onOpenProfile={() => navigate("/admin/account")}
+                onOpenPassword={() => navigate("/admin/account?tab=password")}
+                onCreateUser={() => navigate("/admin/create-user")}
+                showCreateUser={true}
+              />
               <button className="logout-btn" onClick={handleLogout}>
                 Logout
               </button>
@@ -193,6 +196,7 @@ export default function AdminDashboard() {
               authFetch={authFetch}
               showNotification={showNotification}
               loadData={loadData}
+              employees={employees}
             />
           )}
 
@@ -202,16 +206,6 @@ export default function AdminDashboard() {
               authFetch={authFetch}
               showNotification={showNotification}
               loadData={loadData}
-            />
-          )}
-
-          {activeTab === "profile" && (
-            <UserProfile
-              user={user}
-              userType="admin"
-              showUpdatePassword={false}
-              authFetch={authFetch}
-              showNotification={showNotification}
             />
           )}
 

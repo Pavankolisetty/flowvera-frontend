@@ -14,6 +14,7 @@ export default function EmployeeDashboard() {
   const [taskNotifications, setTaskNotifications] = useState({
     hasAccepted: false,
     hasChanges: false,
+    hasDelegated: false,
   });
   const [status, setStatus] = useState({ loading: true, error: "" });
 
@@ -22,10 +23,11 @@ export default function EmployeeDashboard() {
 
     const loadDashboard = async () => {
       try {
-        const [profileResponse, tasksResponse, allTasksResponse] = await Promise.all([
+        const [profileResponse, tasksResponse, allTasksResponse, delegatedTasksResponse] = await Promise.all([
           authFetch("/api/employee/me"),
           authFetch("/api/employee/my-tasks/active"),
           authFetch("/api/employee/my-tasks"),
+          authFetch("/api/employee/delegated-tasks"),
         ]);
 
         if (!profileResponse.ok) {
@@ -43,9 +45,15 @@ export default function EmployeeDashboard() {
           throw new Error(message || "Failed to load task notifications");
         }
 
+        if (!delegatedTasksResponse.ok) {
+          const message = await delegatedTasksResponse.text();
+          throw new Error(message || "Failed to load delegated task notifications");
+        }
+
         const profileData = await profileResponse.json();
         const tasksData = await tasksResponse.json();
         const allTasksData = await allTasksResponse.json();
+        const delegatedTasksData = await delegatedTasksResponse.json();
 
         if (isMounted) {
           setProfileName(profileData.name || user?.name || "");
@@ -58,6 +66,9 @@ export default function EmployeeDashboard() {
               (task) =>
                 task.employeeNotificationUnread &&
                 task.status === "CHANGES_REQUESTED"
+            ),
+            hasDelegated: (delegatedTasksData || []).some(
+              (task) => task.adminNotificationUnread && task.adminNotificationMessage
             ),
           });
           setStatus({ loading: false, error: "" });

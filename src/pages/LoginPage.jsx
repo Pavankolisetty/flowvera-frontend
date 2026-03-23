@@ -3,15 +3,14 @@ import { useNavigate, useLocation, Link } from "react-router-dom"
 import { ArrowLeft, Eye, EyeOff } from "lucide-react"
 import { buildApiUrl } from "../config/api"
 import { useAuth } from "../context/AuthContext"
+import LoginLoadingScene from "../components/auth/LoginLoadingScene"
 import "../styles/LoginPage.css"
 
-const LOGIN_STATUS_MESSAGES = [
-  "Verifying credentials...",
-  "Connecting to secure server...",
-  "Preparing your workspace...",
-  "Almost ready...",
-]
 const normalizeRole = (role) => String(role || "").trim().toUpperCase()
+const MIN_SUCCESS_SCENE_MS = 2400
+const SUCCESS_HOLD_MS = 700
+const FAILURE_MIN_SCENE_MS = 900
+const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms))
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -19,8 +18,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [loginPhase, setLoginPhase] = useState("building")
   const [successMessage, setSuccessMessage] = useState("")
-  const [statusIndex, setStatusIndex] = useState(0)
   const navigate = useNavigate()
   const location = useLocation()
   const { login } = useAuth()
@@ -34,23 +33,12 @@ export default function LoginPage() {
     }
   }, [location])
 
-  useEffect(() => {
-    if (!isSubmitting) {
-      setStatusIndex(0)
-      return undefined
-    }
-
-    const timer = window.setInterval(() => {
-      setStatusIndex((prev) => (prev + 1) % LOGIN_STATUS_MESSAGES.length)
-    }, 4000)
-
-    return () => window.clearInterval(timer)
-  }, [isSubmitting])
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
     setIsSubmitting(true)
+    setLoginPhase("building")
+    const startedAt = Date.now()
 
     try {
       const response = await fetch(buildApiUrl("/api/auth/login-email"), {
@@ -65,6 +53,10 @@ export default function LoginPage() {
       }
 
       const data = await response.json()
+      const elapsed = Date.now() - startedAt
+      await wait(Math.max(0, MIN_SUCCESS_SCENE_MS - elapsed))
+      setLoginPhase("success")
+      await wait(SUCCESS_HOLD_MS)
       login(data)
       
       // Redirect based on user role
@@ -75,9 +67,12 @@ export default function LoginPage() {
         navigate("/employee/dashboard")
       }
     } catch (err) {
+      const elapsed = Date.now() - startedAt
+      await wait(Math.max(0, FAILURE_MIN_SCENE_MS - elapsed))
       setError(err.message)
     } finally {
       setIsSubmitting(false)
+      setLoginPhase("building")
     }
   }
 
@@ -162,17 +157,6 @@ export default function LoginPage() {
               {isSubmitting ? "Signing you in..." : "Sign in"}
             </button>
 
-            {isSubmitting && (
-              <div className="signin-progress-panel" role="status" aria-live="polite">
-                <div className="signin-progress-header">
-                  <span className="signin-spinner" aria-hidden="true"></span>
-                  <strong>Secure sign in in progress</strong>
-                </div>
-                <p className="signin-progress-message">
-                  {LOGIN_STATUS_MESSAGES[statusIndex]}
-                </p>
-              </div>
-            )}
           </form>
 
           <div className="auth-footer-note">
@@ -213,6 +197,12 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      {isSubmitting && (
+        <div className="login-loading-overlay">
+          <LoginLoadingScene phase={loginPhase} />
+        </div>
+      )}
     </div>
   )
 }

@@ -27,6 +27,8 @@ export function AuthProvider({ children }) {
       name: authData.name,
       email: authData.email,
       role: authData.role,
+      designation: authData.designation,
+      phone: authData.phone,
     };
 
     setUser(nextUser);
@@ -54,6 +56,17 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const updateUser = (updates) => {
+    setUser((current) => {
+      const nextUser = { ...(current || {}), ...updates };
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ user: nextUser, token })
+      );
+      return nextUser;
+    });
+  };
+
   const authFetch = (path, options = {}) => {
     const headers = new Headers(options.headers || {});
 
@@ -70,7 +83,7 @@ export function AuthProvider({ children }) {
   };
 
   const value = useMemo(
-    () => ({ user, token, isAuthenticated, login, logout, authFetch }),
+    () => ({ user, token, isAuthenticated, login, logout, authFetch, updateUser }),
     [user, token, isAuthenticated]
   );
 

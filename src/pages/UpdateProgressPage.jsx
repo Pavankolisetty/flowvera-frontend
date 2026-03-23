@@ -70,7 +70,7 @@ export default function UpdateProgressPage() {
     if (assignment?.requiresSubmission && assignment?.submissionDocPath) {
       setStatus((prev) => ({
         ...prev,
-        error: "A document has already been submitted for review. Please wait for the administrator's response or resubmit the document if changes were requested.",
+        error: "A document has already been submitted for review. Please wait for the assigner's response or resubmit the document if changes were requested.",
       }));
       return;
     }
@@ -180,7 +180,7 @@ export default function UpdateProgressPage() {
               <p><strong>Description:</strong> {assignment?.task?.description}</p>
               <p><strong>Due Date:</strong> {assignment?.dueDate ? new Date(assignment.dueDate).toLocaleDateString() : 'No deadline'}</p>
               {assignment?.requiresSubmission && (
-                <p><strong>Submission Workflow:</strong> This task is completed only after the administrator accepts the submitted document.</p>
+                <p><strong>Submission Workflow:</strong> This task is completed only after the assigner accepts the submitted document.</p>
               )}
             </div>
             

@@ -41,13 +41,18 @@ const getFileName = (path, fallback = "Document") => {
   return path.split("/").pop();
 };
 
-const AdminDocs = ({ authFetch, showNotification, loadData }) => {
+const AdminDocs = ({ authFetch, showNotification, loadData, employees = [] }) => {
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reviewDrafts, setReviewDrafts] = useState({});
   const [actionState, setActionState] = useState({});
   const [activeSection, setActiveSection] = useState("assigned");
   const [expandedReviewId, setExpandedReviewId] = useState(null);
+
+  const employeeMap = useMemo(
+    () => new Map(employees.map((employee) => [employee.empId, employee])),
+    [employees]
+  );
 
   useEffect(() => {
     loadDocuments();
@@ -84,6 +89,25 @@ const AdminDocs = ({ authFetch, showNotification, loadData }) => {
         .sort((left, right) => new Date(right.lastSubmittedAt || 0) - new Date(left.lastSubmittedAt || 0)),
     [assignments]
   );
+
+  const delegationOverview = useMemo(
+    () =>
+      [...assignments].sort(
+        (left, right) => new Date(right.assignedAt || 0) - new Date(left.assignedAt || 0)
+      ),
+    [assignments]
+  );
+
+  const canAdminReview = (assignment) => employeeMap.get(assignment.assignedBy)?.role === "ADMIN";
+
+  const getAssignerLabel = (assignment) => {
+    const assigner = employeeMap.get(assignment.assignedBy);
+    if (!assigner) {
+      return assignment.assignedBy || "Unknown";
+    }
+
+    return `${assigner.name} (${assigner.empId})`;
+  };
 
   const handleDownload = async (docType, id) => {
     try {
@@ -200,7 +224,7 @@ const AdminDocs = ({ authFetch, showNotification, loadData }) => {
         {submissionDocs.map((assignment) => {
           const reviewState = getReviewState(assignment);
           const isBusy = Boolean(actionState[assignment.id]);
-          const canReview = assignment.status !== "COMPLETED";
+          const canReview = assignment.status !== "COMPLETED" && canAdminReview(assignment);
           const isReviewExpanded = expandedReviewId === assignment.id;
 
           return (
@@ -218,6 +242,7 @@ const AdminDocs = ({ authFetch, showNotification, loadData }) => {
               <div className="doc-details">
                 <p><strong>Task:</strong> {assignment.task?.title}</p>
                 <p><strong>Employee:</strong> {assignment.employee?.name} ({assignment.employee?.empId})</p>
+                <p><strong>Assigned By:</strong> {getAssignerLabel(assignment)}</p>
                 <p><strong>Submitted:</strong> {formatDateTime(assignment.lastSubmittedAt)}</p>
                 <p><strong>Submissions:</strong> {assignment.submissionCount || 0}</p>
                 {assignment.reviewedAt && (
@@ -306,6 +331,12 @@ const AdminDocs = ({ authFetch, showNotification, loadData }) => {
                       )}
                     </>
                   )}
+                  {!canReview && (
+                    <div className="accepted-banner">
+                      <BadgeCheck size={18} />
+                      <span>Employee-owned review workflow</span>
+                    </div>
+                  )}
                 </div>
               )}
             </article>
@@ -313,6 +344,42 @@ const AdminDocs = ({ authFetch, showNotification, loadData }) => {
         })}
       </div>
       {submissionDocs.length === 0 && <div className="no-docs">No submission documents available</div>}
+    </div>
+  );
+
+  const renderDelegationOverview = () => (
+    <div className="docs-section">
+      <h3>Task Delegations ({delegationOverview.length})</h3>
+      <div className="docs-grid docs-grid-submissions">
+        {delegationOverview.map((assignment) => (
+          <article key={assignment.id} className="doc-card submission-review-card">
+            <div className="submission-card-top">
+              <div className="doc-header">
+                <FileText size={16} />
+                <span className="doc-name">{assignment.task?.title || "Untitled Task"}</span>
+              </div>
+              <span className={`submission-state-pill ${getReviewState(assignment).className}`}>
+                {getReviewState(assignment).label}
+              </span>
+            </div>
+
+            <div className="doc-details">
+              <p><strong>Assigned By:</strong> {getAssignerLabel(assignment)}</p>
+              <p><strong>Assigned To:</strong> {assignment.employee?.name} ({assignment.employee?.empId})</p>
+              <p><strong>Due Date:</strong> {assignment.dueDate ? new Date(assignment.dueDate).toLocaleDateString() : "No due date"}</p>
+              <p><strong>Progress:</strong> {assignment.progress || 0}%</p>
+              <p><strong>Submission Status:</strong> {assignment.submissionDocPath ? "Submitted" : assignment.requiresSubmission ? "Awaiting submission" : "No submission required"}</p>
+              {assignment.lastSubmittedAt && (
+                <p><strong>Last Submitted:</strong> {formatDateTime(assignment.lastSubmittedAt)}</p>
+              )}
+              {assignment.reviewedBy && (
+                <p><strong>Reviewed By:</strong> {assignment.reviewedBy}</p>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
+      {delegationOverview.length === 0 && <div className="no-docs">No task delegations found</div>}
     </div>
   );
 
@@ -360,10 +427,20 @@ const AdminDocs = ({ authFetch, showNotification, loadData }) => {
         >
           Submission Docs
         </button>
+        <button
+          className={`docs-tab-btn ${activeSection === "delegations" ? "active" : ""}`}
+          onClick={() => setActiveSection("delegations")}
+        >
+          Task Delegations
+        </button>
       </div>
       <div className="docs-single-layout">
         <div className="docs-section-half">
-          {activeSection === "assigned" ? renderAssignmentDocs() : renderSubmissionDocs()}
+          {activeSection === "assigned"
+            ? renderAssignmentDocs()
+            : activeSection === "submission"
+              ? renderSubmissionDocs()
+              : renderDelegationOverview()}
         </div>
       </div>
     </div>

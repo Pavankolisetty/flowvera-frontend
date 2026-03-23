@@ -10,6 +10,7 @@ import EmployeeTasksPage from "./pages/EmployeeTasksPage";
 import EmployeeProfilePage from "./pages/EmployeeProfilePage";
 import UpdatePasswordPage from "./pages/UpdatePasswordPage";
 import UpdateProgressPage from "./pages/UpdateProgressPage";
+import AdminAccountPage from "./pages/AdminAccountPage";
 
 import AdminDashboard from "./pages/AdminDashboard";
 import CreateUserPage from "./pages/CreateUserPage";
@@ -174,6 +175,15 @@ export default function App() {
           element={
             <RequireAdmin>
               <CreateUserPage />
+            </RequireAdmin>
+          }
+        />
+
+        <Route
+          path="/admin/account"
+          element={
+            <RequireAdmin>
+              <AdminAccountPage />
             </RequireAdmin>
           }
         />

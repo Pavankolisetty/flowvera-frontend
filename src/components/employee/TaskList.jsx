@@ -56,7 +56,7 @@ const TaskList = ({ tasks, status }) => {
           <div className="task-review-summary neutral">
             <FileCheck2 size={14} />
             <span>
-              Submission {assignment.submissionCount ? `#${assignment.submissionCount}` : ""} is with the admin for review.
+              Submission {assignment.submissionCount ? `#${assignment.submissionCount}` : ""} is with the assigner for review.
             </span>
           </div>
         )}

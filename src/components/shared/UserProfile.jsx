@@ -4,6 +4,8 @@ import { User, Building, Mail, Phone, Edit3, Shield, Calendar, Plus } from "luci
 
 const UserProfile = ({ user, userType = "employee", showUpdatePassword = true, authFetch, showNotification }) => {
   const isAdmin = userType === "admin";
+  const fallbackDesignation = isAdmin ? "Administrator" : "Associate Engineer";
+  const designation = String(user?.designation || "").trim() || fallbackDesignation;
   
   // Simple profile fields based on backend Employee entity
   const profileFields = [
@@ -22,7 +24,7 @@ const UserProfile = ({ user, userType = "employee", showUpdatePassword = true, a
           <User size={48} />
           <div>
             <h2>{user?.name || (isAdmin ? "Admin User" : "Employee")}</h2>
-            <p>{user?.role || (isAdmin ? "Administrator" : "Employee")}</p>
+            <p>{designation}</p>
           </div>
         </div>
         
