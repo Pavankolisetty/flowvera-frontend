@@ -6,7 +6,7 @@ import {
   MessageSquareMore,
   Send,
 } from "lucide-react";
-import Skeleton from "react-loading-skeleton";
+import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
 const formatDateTime = (value) => {
@@ -40,6 +40,12 @@ const getFileName = (path, fallback = "Document") => {
   if (!path) return fallback;
   return path.split("/").pop();
 };
+
+const DOC_SECTIONS = [
+  { key: "assigned", label: "Assigned Docs" },
+  { key: "submission", label: "Submission Docs" },
+  { key: "delegations", label: "Task Delegations" },
+];
 
 const AdminDocs = ({ authFetch, showNotification, loadData, employees = [] }) => {
   const [assignments, setAssignments] = useState([]);
@@ -383,56 +389,79 @@ const AdminDocs = ({ authFetch, showNotification, loadData, employees = [] }) =>
     </div>
   );
 
-  if (loading) {
+  const renderLoadingSkeleton = () => {
+    const skeletonHeadingWidth =
+      activeSection === "assigned" ? 220 : activeSection === "submission" ? 250 : 240;
+    const skeletonCards = activeSection === "assigned" ? 4 : 3;
+    const skeletonGridClassName =
+      activeSection === "assigned" ? "docs-grid" : "docs-grid docs-grid-submissions";
+
     return (
       <div className="docs-content">
-        <div className="docs-horizontal-layout">
-          {Array.from({ length: 2 }).map((_, colIndex) => (
-            <div className="docs-section-half" key={colIndex}>
-              <div className="docs-skeleton-header">
-                <Skeleton width={180} height={18} />
+        <SkeletonTheme
+          baseColor="rgba(139, 111, 92, 0.12)"
+          highlightColor="rgba(255, 255, 255, 0.72)"
+          borderRadius={14}
+          duration={1.6}
+        >
+          <div className="docs-tab-switcher docs-skeleton-switcher" aria-hidden="true">
+            {DOC_SECTIONS.map((section) => (
+              <div
+                key={section.key}
+                className={`docs-tab-btn docs-skeleton-tab ${activeSection === section.key ? "active" : ""}`}
+              >
+                <Skeleton width={section.key === "delegations" ? 150 : 128} height={16} />
               </div>
-              <div className="docs-skeleton-grid">
-                {Array.from({ length: 4 }).map((__, cardIndex) => (
-                  <div className="docs-skeleton-card" key={cardIndex}>
-                    <div className="docs-skeleton-row">
-                      <Skeleton width={160} height={16} />
+            ))}
+          </div>
+
+          <div className="docs-single-layout">
+            <div className="docs-section-half docs-skeleton-section">
+              <div className="docs-section docs-skeleton-panel">
+                <div className="docs-skeleton-header docs-skeleton-title">
+                  <Skeleton width={skeletonHeadingWidth} height={24} />
+                </div>
+                <div className={skeletonGridClassName}>
+                  {Array.from({ length: skeletonCards }).map((_, cardIndex) => (
+                    <div className="docs-skeleton-card" key={cardIndex}>
+                      <div className="docs-skeleton-row">
+                        <Skeleton circle width={18} height={18} />
+                        <Skeleton width="62%" height={18} />
+                      </div>
+                      <Skeleton width="38%" height={14} style={{ marginBottom: 12 }} />
+                      <Skeleton width="56%" height={14} style={{ marginBottom: 12 }} />
+                      <Skeleton width="48%" height={14} style={{ marginBottom: 12 }} />
+                      {(activeSection === "submission" || activeSection === "delegations") && (
+                        <Skeleton width="44%" height={14} style={{ marginBottom: 12 }} />
+                      )}
+                      <Skeleton width="100%" height={42} style={{ marginTop: 18, borderRadius: 12 }} />
                     </div>
-                    <Skeleton width="100%" height={12} style={{ marginBottom: 8 }} />
-                    <Skeleton width="80%" height={12} style={{ marginBottom: 8 }} />
-                    <Skeleton width="70%" height={12} />
-                    <Skeleton width="100%" height={34} style={{ marginTop: 12, borderRadius: 8 }} />
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        </SkeletonTheme>
       </div>
     );
+  };
+
+  if (loading) {
+    return renderLoadingSkeleton();
   }
 
   return (
     <div className="docs-content">
       <div className="docs-tab-switcher">
-        <button
-          className={`docs-tab-btn ${activeSection === "assigned" ? "active" : ""}`}
-          onClick={() => setActiveSection("assigned")}
-        >
-          Assigned Docs
-        </button>
-        <button
-          className={`docs-tab-btn ${activeSection === "submission" ? "active" : ""}`}
-          onClick={() => setActiveSection("submission")}
-        >
-          Submission Docs
-        </button>
-        <button
-          className={`docs-tab-btn ${activeSection === "delegations" ? "active" : ""}`}
-          onClick={() => setActiveSection("delegations")}
-        >
-          Task Delegations
-        </button>
+        {DOC_SECTIONS.map((section) => (
+          <button
+            key={section.key}
+            className={`docs-tab-btn ${activeSection === section.key ? "active" : ""}`}
+            onClick={() => setActiveSection(section.key)}
+          >
+            {section.label}
+          </button>
+        ))}
       </div>
       <div className="docs-single-layout">
         <div className="docs-section-half">

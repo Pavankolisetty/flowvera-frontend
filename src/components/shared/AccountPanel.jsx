@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Check, Mail, Phone, Shield, User, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
@@ -16,6 +16,13 @@ export default function AccountPanel({ open, mode = "profile", onClose, variant 
   const [formData, setFormData] = useState({ name: "", email: "", phone: "" });
   const [passwordData, setPasswordData] = useState(initialPasswordState);
   const [status, setStatus] = useState({ loading: false, error: "", success: "" });
+  const authFetchRef = useRef(authFetch);
+  const updateUserRef = useRef(updateUser);
+
+  useEffect(() => {
+    authFetchRef.current = authFetch;
+    updateUserRef.current = updateUser;
+  }, [authFetch, updateUser]);
 
   useEffect(() => {
     if (!open) {
@@ -25,10 +32,16 @@ export default function AccountPanel({ open, mode = "profile", onClose, variant 
     setPanelMode(mode);
     setEditing(mode === "edit");
     setStatus({ loading: false, error: "", success: "" });
+  }, [open, mode]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
 
     const loadProfile = async () => {
       try {
-        const response = await authFetch("/api/account/me");
+        const response = await authFetchRef.current("/api/account/me");
         if (!response.ok) {
           const message = await response.text();
           throw new Error(message || "Failed to load account profile");
@@ -36,7 +49,7 @@ export default function AccountPanel({ open, mode = "profile", onClose, variant 
 
         const data = await response.json();
         setProfile(data);
-        updateUser({
+        updateUserRef.current({
           name: data.name,
           email: data.email,
           phone: data.phone,
@@ -53,7 +66,7 @@ export default function AccountPanel({ open, mode = "profile", onClose, variant 
     };
 
     loadProfile();
-  }, [open, mode, authFetch]);
+  }, [open, mode]);
 
   const stats = useMemo(
     () => [

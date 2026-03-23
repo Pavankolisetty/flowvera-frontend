@@ -1625,18 +1625,56 @@
   margin-bottom: 18px;
 }
 
-.docs-skeleton-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
+.docs-skeleton-section {
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(31, 41, 51, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.docs-skeleton-switcher {
+  pointer-events: none;
+}
+
+.docs-skeleton-tab {
+  min-width: 180px;
+  justify-content: center;
+  cursor: default;
+}
+
+.docs-skeleton-tab .react-loading-skeleton {
+  line-height: 1;
 }
 
 .docs-skeleton-card {
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 8px 20px rgba(31, 41, 51, 0.08);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(247, 244, 240, 0.84));
+  border: 1px solid rgba(31, 41, 51, 0.08);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 14px 30px rgba(31, 41, 51, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+.docs-skeleton-panel {
+  min-height: 420px;
+}
+
+.docs-skeleton-title {
+  position: sticky;
+  top: 0;
+  padding-bottom: 14px;
+  margin-bottom: 22px;
+  background: rgba(255, 255, 255, 0.9);
+  border-bottom: 2px solid rgba(31, 41, 51, 0.06);
+  backdrop-filter: blur(8px);
+  z-index: 1;
+}
+
+.docs-skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
 .docs-horizontal-layout {
