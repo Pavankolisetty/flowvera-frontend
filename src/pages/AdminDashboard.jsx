@@ -3,9 +3,9 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import AdminAnalytics from "../components/admin/AdminAnalytics";
 import AdminDocs from "../components/admin/AdminDocs";
+import AdminEmployeeInsights from "../components/admin/AdminEmployeeInsights";
 import AdminTaskManagement from "../components/admin/AdminTaskManagement";
 import FeedbackForm from "../components/shared/FeedbackForm";
-import FeedbackViewer from "../components/admin/FeedbackViewer";
 import AccountMenu from "../components/shared/AccountMenu";
 import "../styles/AdminDashboard.css";
 
@@ -159,11 +159,11 @@ export default function AdminDashboard() {
 
               <button
                 className={`admin-nav-link ${
-                  activeTab === "feedback" ? "active" : ""
+                  activeTab === "employee-insights" ? "active" : ""
                 }`}
-                onClick={() => handleTabChange("feedback")}
+                onClick={() => handleTabChange("employee-insights")}
               >
-                Feedback
+                Employee Insights
               </button>
 
               <AccountMenu
@@ -209,8 +209,13 @@ export default function AdminDashboard() {
             />
           )}
 
-          {activeTab === "feedback" && (
-            <FeedbackViewer authFetch={authFetch} />
+          {activeTab === "employee-insights" && (
+            <AdminEmployeeInsights
+              employees={employees}
+              assignments={assignments}
+              authFetch={authFetch}
+              showNotification={showNotification}
+            />
           )}
         </div>
       </div>

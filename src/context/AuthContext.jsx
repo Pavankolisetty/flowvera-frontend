@@ -4,6 +4,7 @@ import { buildApiUrl } from "../config/api";
 const AuthContext = createContext(null);
 
 const STORAGE_KEY = "flowvera_auth";
+const ATTENDANCE_SESSION_KEY = "flowvera_attendance_session";
 
 const readStoredAuth = () => {
   try {
@@ -42,11 +43,16 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     try {
       if (token) {
+        const attendanceSessionKey = localStorage.getItem(ATTENDANCE_SESSION_KEY);
+        const headers = new Headers({
+          Authorization: `Bearer ${token}`,
+        });
+        if (attendanceSessionKey) {
+          headers.set("X-Attendance-Session-Key", attendanceSessionKey);
+        }
         await fetch(buildApiUrl("/api/auth/logout"), {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers,
         }).catch(() => {});
       }
     } finally {
