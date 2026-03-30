@@ -503,46 +503,67 @@ const AdminAnalytics = ({ employees, assignments, authFetch, showNotification, d
               </div>
             </div>
           ) : (
-            <div className="attendance-status-groups">
-              {Object.entries(attendanceByStatus)
-                .filter(([, employeesInStatus]) => employeesInStatus.length > 0)
-                .map(([statusKey, employeesInStatus]) => {
-                  const meta = statusMeta(statusKey);
+            <>
+              <div className="attendance-admin-stats">
+                <div className="attendance-admin-pill live">
+                  <strong>{todayAttendanceSummary.clockedIn}</strong>
+                  <span>Clocked in</span>
+                </div>
+                <div className="attendance-admin-pill present">
+                  <strong>{todayAttendanceSummary.present}</strong>
+                  <span>Present</span>
+                </div>
+                <div className="attendance-admin-pill partial">
+                  <strong>{todayAttendanceSummary.partial}</strong>
+                  <span>Partial</span>
+                </div>
+                <div className="attendance-admin-pill absent">
+                  <strong>{todayAttendanceSummary.absent}</strong>
+                  <span>Absent</span>
+                </div>
+              </div>
 
-                  return (
-                    <div key={statusKey} className={`attendance-group-card ${meta.tone}`}>
-                      <div className="attendance-group-header">
-                        <span className={`attendance-status-chip ${meta.tone}`}>{meta.label}</span>
-                        <strong>{employeesInStatus.length}</strong>
-                      </div>
+              <div className="attendance-status-groups">
+                {Object.entries(attendanceByStatus)
+                  .filter(([, employeesInStatus]) => employeesInStatus.length > 0)
+                  .map(([statusKey, employeesInStatus]) => {
+                    const meta = statusMeta(statusKey);
 
-                      <div className="attendance-admin-list">
-                        {employeesInStatus.map((employee) => (
-                          <button
-                            key={employee.empId}
-                            type="button"
-                            className="attendance-admin-row"
-                            onClick={() =>
-                              showNotification(
-                                `Open Employee Insights to inspect ${employee.name}'s full attendance calendar and punctuality details.`,
-                                "success"
-                              )
-                            }
-                          >
-                            <div>
-                              <strong>{employee.name}</strong>
-                              <span>{employee.designation || "Team member"}</span>
-                            </div>
-                            <div className="attendance-admin-row-meta">
-                              <small>{formatMinutes(employee.today?.workedMinutes)}</small>
-                            </div>
-                          </button>
-                        ))}
+                    return (
+                      <div key={statusKey} className={`attendance-group-card ${meta.tone}`}>
+                        <div className="attendance-group-header">
+                          <span className={`attendance-status-chip ${meta.tone}`}>{meta.label}</span>
+                          <strong>{employeesInStatus.length}</strong>
+                        </div>
+
+                        <div className="attendance-admin-list">
+                          {employeesInStatus.map((employee) => (
+                            <button
+                              key={employee.empId}
+                              type="button"
+                              className="attendance-admin-row"
+                              onClick={() =>
+                                showNotification(
+                                  `Open Employee Insights to inspect ${employee.name}'s full attendance calendar and punctuality details.`,
+                                  "success"
+                                )
+                              }
+                            >
+                              <div>
+                                <strong>{employee.name}</strong>
+                                <span>{employee.designation || "Team member"}</span>
+                              </div>
+                              <div className="attendance-admin-row-meta">
+                                <small>{formatMinutes(employee.today?.workedMinutes)}</small>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-            </div>
+                    );
+                  })}
+              </div>
+            </>
           )}
         </div>
 
