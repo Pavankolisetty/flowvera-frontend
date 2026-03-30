@@ -469,34 +469,42 @@ const AdminAnalytics = ({ employees, assignments, authFetch, showNotification, d
             Today&apos;s Attendance
           </h3>
 
-          <div className="attendance-admin-stats">
-            <div className="attendance-admin-pill live">
-              <strong>{attendanceLoading ? "..." : todayAttendanceSummary.clockedIn}</strong>
-              <span>Clocked in</span>
-            </div>
-            <div className="attendance-admin-pill present">
-              <strong>{attendanceLoading ? "..." : todayAttendanceSummary.present}</strong>
-              <span>Present</span>
-            </div>
-            <div className="attendance-admin-pill partial">
-              <strong>{attendanceLoading ? "..." : todayAttendanceSummary.partial}</strong>
-              <span>Partial</span>
-            </div>
-            <div className="attendance-admin-pill absent">
-              <strong>{attendanceLoading ? "..." : todayAttendanceSummary.absent}</strong>
-              <span>Absent</span>
-            </div>
-          </div>
+          {attendanceLoading ? (
+            <div className="attendance-admin-skeleton">
+              <div className="attendance-admin-stats">
+                {["live", "present", "partial", "absent"].map((tone) => (
+                  <div key={tone} className={`attendance-admin-pill ${tone} skeleton-pill`}>
+                    <div className="skeleton-shimmer attendance-skeleton-value"></div>
+                    <div className="skeleton-shimmer attendance-skeleton-label"></div>
+                  </div>
+                ))}
+              </div>
 
-          <div className="attendance-status-groups">
-            {attendanceLoading ? (
-              Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="attendance-group-card">
-                  <Skeleton height={44} />
-                </div>
-              ))
-            ) : (
-              Object.entries(attendanceByStatus)
+              <div className="attendance-status-groups skeleton-groups">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="attendance-group-card skeleton-group-card">
+                    <div className="attendance-group-header">
+                      <div className="skeleton-shimmer attendance-skeleton-chip"></div>
+                      <div className="skeleton-shimmer attendance-skeleton-count"></div>
+                    </div>
+                    <div className="attendance-admin-list">
+                      {Array.from({ length: 2 }).map((__, rowIndex) => (
+                        <div key={rowIndex} className="attendance-admin-row skeleton-row" aria-hidden="true">
+                          <div className="attendance-skeleton-copy">
+                            <div className="skeleton-shimmer attendance-skeleton-name"></div>
+                            <div className="skeleton-shimmer attendance-skeleton-role"></div>
+                          </div>
+                          <div className="skeleton-shimmer attendance-skeleton-time"></div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="attendance-status-groups">
+              {Object.entries(attendanceByStatus)
                 .filter(([, employeesInStatus]) => employeesInStatus.length > 0)
                 .map(([statusKey, employeesInStatus]) => {
                   const meta = statusMeta(statusKey);
@@ -533,9 +541,9 @@ const AdminAnalytics = ({ employees, assignments, authFetch, showNotification, d
                       </div>
                     </div>
                   );
-                })
-            )}
-          </div>
+                })}
+            </div>
+          )}
         </div>
 
         <div className="analytics-card performance-overview-card">

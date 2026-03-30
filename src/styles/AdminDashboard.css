@@ -1032,6 +1032,43 @@
   background: rgba(239, 68, 68, 0.12);
 }
 
+.attendance-admin-skeleton {
+  display: grid;
+  gap: 14px;
+}
+
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: rgba(31, 41, 51, 0.08);
+}
+
+.skeleton-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.72), transparent);
+  animation: admin-skeleton-shimmer 1.45s ease-in-out infinite;
+}
+
+.attendance-admin-pill.skeleton-pill {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.attendance-skeleton-value {
+  width: 34px;
+  height: 22px;
+  border-radius: 8px;
+}
+
+.attendance-skeleton-label {
+  width: 92px;
+  height: 11px;
+  border-radius: 999px;
+}
+
 .attendance-admin-list {
   display: grid;
   gap: 8px;
@@ -1068,6 +1105,17 @@
   background: rgba(239, 68, 68, 0.08);
 }
 
+.attendance-status-groups.skeleton-groups {
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+}
+
+.attendance-group-card.skeleton-group-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.88));
+  border: 1px solid rgba(31, 41, 51, 0.05);
+}
+
 .attendance-group-header {
   display: flex;
   align-items: center;
@@ -1079,6 +1127,18 @@
 .attendance-group-header strong {
   color: #111827;
   font-size: 16px;
+}
+
+.attendance-skeleton-chip {
+  width: 92px;
+  height: 28px;
+  border-radius: 999px;
+}
+
+.attendance-skeleton-count {
+  width: 20px;
+  height: 18px;
+  border-radius: 8px;
 }
 
 .attendance-admin-row {
@@ -1109,6 +1169,39 @@
 .attendance-admin-row span {
   color: #64748b;
   font-size: 12px;
+}
+
+.attendance-admin-row.skeleton-row {
+  cursor: default;
+}
+
+.attendance-admin-row.skeleton-row:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.attendance-skeleton-copy {
+  display: grid;
+  gap: 8px;
+  flex: 1;
+}
+
+.attendance-skeleton-name {
+  width: 126px;
+  height: 14px;
+  border-radius: 999px;
+}
+
+.attendance-skeleton-role {
+  width: 82px;
+  height: 11px;
+  border-radius: 999px;
+}
+
+.attendance-skeleton-time {
+  width: 54px;
+  height: 12px;
+  border-radius: 999px;
 }
 
 .attendance-admin-row-meta {
@@ -1153,6 +1246,12 @@
 .att-status.absent {
   background: rgba(239, 68, 68, 0.14);
   color: #b91c1c;
+}
+
+@keyframes admin-skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .attendance-detail-grid {
