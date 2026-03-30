@@ -360,7 +360,68 @@ const AttendancePanel = () => {
           <h3>Attendance</h3>
           <span className="panel-badge subtle">Loading</span>
         </div>
-        <div className="employee-loading">Loading today&apos;s attendance...</div>
+
+        <div className="attendance-skeleton-card">
+          <div className="attendance-skeleton-top">
+            <div className="attendance-skeleton-block eyebrow"></div>
+            <div className="attendance-skeleton-block headline"></div>
+            <div className="attendance-skeleton-block subline"></div>
+          </div>
+          <div className="attendance-skeleton-block action"></div>
+        </div>
+
+        <div className="attendance-skeleton-metrics">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="attendance-skeleton-metric">
+              <div className="attendance-skeleton-block icon"></div>
+              <div className="attendance-skeleton-block label"></div>
+              <div className="attendance-skeleton-block value"></div>
+            </div>
+          ))}
+        </div>
+
+        <div className="attendance-skeleton-note"></div>
+
+        <div className="attendance-history attendance-history-skeleton">
+          <div className="attendance-calendar-header">
+            <h4>
+              <CalendarDays size={14} />
+              Attendance Calendar
+            </h4>
+            <div className="attendance-calendar-nav">
+              <div className="attendance-skeleton-circle"></div>
+              <div className="attendance-skeleton-block month"></div>
+              <div className="attendance-skeleton-circle"></div>
+            </div>
+          </div>
+
+          <div className="attendance-skeleton-block join"></div>
+
+          <div className="attendance-skeleton-legend">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div key={index} className="attendance-skeleton-legend-item">
+                <div className="attendance-skeleton-dot"></div>
+                <div className="attendance-skeleton-block legend"></div>
+              </div>
+            ))}
+          </div>
+
+          <div className="attendance-skeleton-weekdays">
+            {WEEKDAY_LABELS.map((label) => (
+              <div key={label} className="attendance-skeleton-weekday">
+                {label}
+              </div>
+            ))}
+          </div>
+
+          <div className="attendance-skeleton-calendar-grid">
+            {Array.from({ length: 35 }).map((_, index) => (
+              <div key={index} className="attendance-skeleton-cell"></div>
+            ))}
+          </div>
+
+          <div className="attendance-skeleton-block footnote"></div>
+        </div>
       </div>
     );
   }

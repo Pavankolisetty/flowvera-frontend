@@ -502,6 +502,198 @@
   line-height: 1.5;
 }
 
+.attendance-skeleton-card,
+.attendance-skeleton-metric,
+.attendance-skeleton-note,
+.attendance-history-skeleton {
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 18px;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.05);
+}
+
+.attendance-skeleton-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px;
+}
+
+.attendance-skeleton-top {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.attendance-skeleton-block,
+.attendance-skeleton-circle,
+.attendance-skeleton-dot,
+.attendance-skeleton-cell {
+  position: relative;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.07);
+}
+
+.attendance-skeleton-block::after,
+.attendance-skeleton-circle::after,
+.attendance-skeleton-dot::after,
+.attendance-skeleton-cell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+  animation: attendance-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.attendance-skeleton-block.eyebrow {
+  width: 70px;
+  height: 12px;
+  border-radius: 999px;
+}
+
+.attendance-skeleton-block.headline {
+  width: 140px;
+  height: 34px;
+  border-radius: 12px;
+}
+
+.attendance-skeleton-block.subline {
+  width: 180px;
+  height: 14px;
+  border-radius: 10px;
+}
+
+.attendance-skeleton-block.action {
+  width: 168px;
+  height: 52px;
+  border-radius: 16px;
+}
+
+.attendance-skeleton-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.attendance-skeleton-metric {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.attendance-skeleton-block.icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 8px;
+}
+
+.attendance-skeleton-block.label {
+  width: 96px;
+  height: 12px;
+  border-radius: 999px;
+}
+
+.attendance-skeleton-block.value {
+  width: 128px;
+  height: 18px;
+  border-radius: 10px;
+}
+
+.attendance-skeleton-note {
+  height: 48px;
+}
+
+.attendance-history-skeleton {
+  padding: 18px 20px;
+}
+
+.attendance-skeleton-circle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+}
+
+.attendance-skeleton-block.month {
+  width: 120px;
+  height: 16px;
+  border-radius: 10px;
+}
+
+.attendance-skeleton-block.join {
+  width: 280px;
+  height: 14px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+
+.attendance-skeleton-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  margin-bottom: 14px;
+}
+
+.attendance-skeleton-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.attendance-skeleton-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.attendance-skeleton-block.legend {
+  width: 82px;
+  height: 12px;
+  border-radius: 999px;
+}
+
+.attendance-skeleton-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.attendance-skeleton-weekday {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+}
+
+.attendance-skeleton-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.attendance-skeleton-cell {
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+}
+
+.attendance-skeleton-block.footnote {
+  width: 100%;
+  height: 14px;
+  border-radius: 10px;
+  margin-top: 16px;
+}
+
+@keyframes attendance-skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 .today-status {
   display: flex;
   justify-content: space-between;
@@ -2214,6 +2406,27 @@
 }
 
 @media (max-width: 768px) {
+  .attendance-skeleton-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .attendance-skeleton-block.action,
+  .attendance-skeleton-block.month,
+  .attendance-skeleton-block.join {
+    width: 100%;
+  }
+
+  .attendance-skeleton-metrics,
+  .attendance-skeleton-weekdays,
+  .attendance-skeleton-calendar-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .attendance-skeleton-weekday {
+    text-align: left;
+  }
+
   .account-trigger-copy {
     display: none;
   }
