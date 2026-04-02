@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { Activity, PieChart, TrendingUp } from "lucide-react";
+import { Activity, ChevronLeft, ChevronRight, PieChart, TrendingUp } from "lucide-react";
 
 const formatMinutes = (minutes = 0) => {
   const hours = Math.floor(Math.max(minutes, 0) / 60);
@@ -9,9 +9,74 @@ const formatMinutes = (minutes = 0) => {
   return `${hours}h ${remainingMinutes}m`;
 };
 
+const createEndOfDay = (value) => {
+  const date = new Date(value);
+  date.setHours(23, 59, 59, 999);
+  return date;
+};
+
+const isSameOrBefore = (left, right) => new Date(left).getTime() <= new Date(right).getTime();
+
+const buildProgressEvents = (assignment) => {
+  const events = [];
+  const assignedAt = assignment.assignedAt ? new Date(assignment.assignedAt) : null;
+
+  if (assignedAt) {
+    events.push({
+      recordedAt: assignedAt,
+      progress: 0,
+      status: assignment.status || "ASSIGNED",
+      source: "ASSIGNED",
+    });
+  }
+
+  const history = Array.isArray(assignment.progressHistory) ? assignment.progressHistory : [];
+  history.forEach((entry) => {
+    if (!entry?.recordedAt) {
+      return;
+    }
+
+    events.push({
+      recordedAt: new Date(entry.recordedAt),
+      progress: entry.progress ?? 0,
+      status: entry.status || assignment.status || "ASSIGNED",
+      source: entry.source || "HISTORY",
+    });
+  });
+
+  if (assignment.lastSubmittedAt) {
+    events.push({
+      recordedAt: new Date(assignment.lastSubmittedAt),
+      progress: 90,
+      status: "UNDER_REVIEW",
+      source: "SUBMITTED",
+    });
+  }
+
+  if (assignment.reviewedAt) {
+    const reviewedProgress =
+      assignment.status === "COMPLETED" ? 100 : assignment.status === "CHANGES_REQUESTED" ? 85 : assignment.progress ?? 0;
+
+    events.push({
+      recordedAt: new Date(assignment.reviewedAt),
+      progress: reviewedProgress,
+      status: assignment.status,
+      source: "REVIEWED",
+    });
+  }
+
+  return events.sort((left, right) => {
+    const timeDifference = left.recordedAt.getTime() - right.recordedAt.getTime();
+    if (timeDifference !== 0) {
+      return timeDifference;
+    }
+
+    return (left.progress ?? 0) - (right.progress ?? 0);
+  });
+};
+
 const inferProgressAsOf = (assignment, cutoffDate) => {
-  const cutoff = new Date(cutoffDate);
-  cutoff.setHours(23, 59, 59, 999);
+  const cutoff = createEndOfDay(cutoffDate);
   const today = new Date();
   const isCurrentOrFutureCutoff =
     cutoff.getFullYear() > today.getFullYear() ||
@@ -24,27 +89,12 @@ const inferProgressAsOf = (assignment, cutoffDate) => {
     return null;
   }
 
-  const history = Array.isArray(assignment.progressHistory) ? assignment.progressHistory : [];
-  const latestHistory = history
-    .filter((entry) => entry.recordedAt && new Date(entry.recordedAt) <= cutoff)
-    .sort((left, right) => new Date(left.recordedAt) - new Date(right.recordedAt))
+  const latestKnownEvent = buildProgressEvents(assignment)
+    .filter((entry) => isSameOrBefore(entry.recordedAt, cutoff))
     .at(-1);
 
-  if (latestHistory) {
-    return latestHistory.progress ?? 0;
-  }
-
-  if (assignment.reviewedAt && new Date(assignment.reviewedAt) <= cutoff) {
-    if (assignment.status === "COMPLETED") {
-      return 100;
-    }
-    if (assignment.status === "CHANGES_REQUESTED") {
-      return 85;
-    }
-  }
-
-  if (assignment.lastSubmittedAt && new Date(assignment.lastSubmittedAt) <= cutoff) {
-    return 90;
+  if (latestKnownEvent) {
+    return latestKnownEvent.progress ?? 0;
   }
 
   if (isCurrentOrFutureCutoff) {
@@ -81,6 +131,8 @@ const AdminAnalytics = ({ employees, assignments, authFetch, showNotification, d
   const [todayAttendance, setTodayAttendance] = useState([]);
   const [attendanceLoading, setAttendanceLoading] = useState(true);
   const [hoveredPoint, setHoveredPoint] = useState(null);
+  const [employeePage, setEmployeePage] = useState(1);
+  const employeesPerPage = 4;
 
   const nonAdminEmployees = useMemo(
     () => employees.filter((employee) => employee.role !== "ADMIN"),
@@ -116,55 +168,55 @@ const AdminAnalytics = ({ employees, assignments, authFetch, showNotification, d
       emp.averageProgress = emp.totalTasks > 0 ? Math.round(emp.totalProgress / emp.totalTasks) : 0;
     });
 
-    return Object.values(empPerformance);
+    return Object.values(empPerformance).sort((left, right) => {
+      if (right.averageProgress !== left.averageProgress) {
+        return right.averageProgress - left.averageProgress;
+      }
+
+      return left.name.localeCompare(right.name);
+    });
   }, [assignments, nonAdminEmployees]);
+
+  const totalEmployeePages = Math.max(1, Math.ceil(performanceData.length / employeesPerPage));
+
+  const paginatedPerformanceData = useMemo(() => {
+    const startIndex = (employeePage - 1) * employeesPerPage;
+    return performanceData.slice(startIndex, startIndex + employeesPerPage);
+  }, [employeePage, performanceData]);
+
+  const visiblePageNumbers = useMemo(() => {
+    const maxVisiblePages = 5;
+    const startPage = Math.max(1, Math.min(employeePage - 2, totalEmployeePages - maxVisiblePages + 1));
+    const endPage = Math.min(totalEmployeePages, startPage + maxVisiblePages - 1);
+
+    return Array.from({ length: endPage - startPage + 1 }, (_, index) => startPage + index);
+  }, [employeePage, totalEmployeePages]);
 
   const performanceTrend = useMemo(() => {
     const trendData = [];
     const today = new Date();
-    const employeePerformanceMap = new Map(
-      nonAdminEmployees.map((employee) => [
-        employee.empId,
-        {
-          name: employee.name,
-          totalTasks: 0,
-          totalProgress: 0,
-        },
-      ])
-    );
 
     for (let i = 6; i >= 0; i -= 1) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
-      const employeeDailyProgress = new Map(
-        Array.from(employeePerformanceMap.entries()).map(([empId, value]) => [
-          empId,
-          { ...value },
-        ])
-      );
+      const employeesWithAssignments = new Set();
+      let activeTaskCount = 0;
+      let totalTaskProgress = 0;
 
       assignments.forEach((assignment) => {
         const empId = assignment.employee?.empId;
         const progress = inferProgressAsOf(assignment, date);
-        const employeeEntry = employeeDailyProgress.get(empId);
 
-        if (!employeeEntry || progress === null) {
+        if (!empId || progress === null) {
           return;
         }
 
-        employeeEntry.totalTasks += 1;
-        employeeEntry.totalProgress += progress;
+        activeTaskCount += 1;
+        totalTaskProgress += progress;
+        employeesWithAssignments.add(empId);
       });
 
-      const totalPerformance = Array.from(employeeDailyProgress.values()).reduce((sum, employee) => {
-        if (employee.totalTasks === 0) {
-          return sum;
-        }
-
-        return sum + employee.totalProgress / employee.totalTasks;
-      }, 0);
-      const overallPerformance =
-        employeeDailyProgress.size > 0 ? Math.round(totalPerformance / employeeDailyProgress.size) : 0;
+      const overallPerformance = activeTaskCount > 0 ? Math.round(totalTaskProgress / activeTaskCount) : 0;
       const isToday = i === 0;
 
       trendData.push({
@@ -172,12 +224,13 @@ const AdminAnalytics = ({ employees, assignments, authFetch, showNotification, d
         weekday: date.toLocaleDateString("en-US", { weekday: "short" }),
         performance: overallPerformance,
         isToday,
-        employeeCount: employeeDailyProgress.size,
+        employeeCount: employeesWithAssignments.size,
+        activeTaskCount,
       });
     }
 
     return trendData;
-  }, [assignments, nonAdminEmployees]);
+  }, [assignments]);
 
   const todayAttendanceSummary = useMemo(() => {
     const summary = {
@@ -262,6 +315,10 @@ const AdminAnalytics = ({ employees, assignments, authFetch, showNotification, d
 
     loadAttendance();
   }, [authFetch, showNotification]);
+
+  useEffect(() => {
+    setEmployeePage((currentPage) => Math.min(currentPage, totalEmployeePages));
+  }, [totalEmployeePages]);
 
   return (
     <div className="stats-content">
@@ -388,17 +445,17 @@ const AdminAnalytics = ({ employees, assignments, authFetch, showNotification, d
                 {hoveredPoint && (
                   <g className="tooltip">
                     <rect
-                      x={getChartX(hoveredPoint.index) - 48}
-                      y={getChartY(hoveredPoint.performance) - 60}
-                      width="96"
-                      height="46"
+                      x={getChartX(hoveredPoint.index) - 54}
+                      y={getChartY(hoveredPoint.performance) - 68}
+                      width="108"
+                      height="58"
                       rx="8"
                       fill={hoveredPoint.isToday ? "#b45309" : "#1f2933"}
                       className="tooltip-bg"
                     />
                     <text
                       x={getChartX(hoveredPoint.index)}
-                      y={getChartY(hoveredPoint.performance) - 39}
+                      y={getChartY(hoveredPoint.performance) - 47}
                       textAnchor="middle"
                       fontSize="12"
                       fill="#f8fafc"
@@ -408,12 +465,21 @@ const AdminAnalytics = ({ employees, assignments, authFetch, showNotification, d
                     </text>
                     <text
                       x={getChartX(hoveredPoint.index)}
-                      y={getChartY(hoveredPoint.performance) - 25}
+                      y={getChartY(hoveredPoint.performance) - 31}
                       textAnchor="middle"
                       fontSize="9"
                       fill="#fde68a"
                     >
                       {hoveredPoint.isToday ? "Today" : hoveredPoint.date}
+                    </text>
+                    <text
+                      x={getChartX(hoveredPoint.index)}
+                      y={getChartY(hoveredPoint.performance) - 17}
+                      textAnchor="middle"
+                      fontSize="8"
+                      fill="#f8fafc"
+                    >
+                      {hoveredPoint.activeTaskCount} active tasks
                     </text>
                   </g>
                 )}
@@ -446,7 +512,7 @@ const AdminAnalytics = ({ employees, assignments, authFetch, showNotification, d
             <div className="chart-summary-card">
               <span>Team completion pace</span>
               <strong>{performanceTrend.at(-1)?.performance || 0}%</strong>
-              <small>Average of all employees; unassigned employees stay at 0%</small>
+              <small>End-of-day average across all assigned tasks, carrying forward the latest known progress.</small>
             </div>
             <div className="chart-summary-card">
               <span>Employee Need To Focus Name</span>
@@ -568,10 +634,50 @@ const AdminAnalytics = ({ employees, assignments, authFetch, showNotification, d
         </div>
 
         <div className="analytics-card performance-overview-card">
-          <h3>
-            <PieChart size={20} />
-            Individual Employee Performance
-          </h3>
+          <div className="employee-performance-header">
+            <h3>
+              <PieChart size={20} />
+              Individual Employee Performance
+            </h3>
+            {!dataLoading && performanceData.length > 0 && (
+              <div className="employee-performance-toolbar">
+                <span className="employee-performance-summary">
+                  Showing {(employeePage - 1) * employeesPerPage + 1}-
+                  {Math.min(employeePage * employeesPerPage, performanceData.length)} of {performanceData.length}
+                </span>
+                <div className="employee-performance-pagination">
+                  <button
+                    type="button"
+                    className="employee-page-btn"
+                    onClick={() => setEmployeePage((current) => Math.max(1, current - 1))}
+                    disabled={employeePage === 1}
+                    aria-label="Previous employee page"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  {visiblePageNumbers.map((pageNumber) => (
+                    <button
+                      key={pageNumber}
+                      type="button"
+                      className={`employee-page-btn ${employeePage === pageNumber ? "active" : ""}`}
+                      onClick={() => setEmployeePage(pageNumber)}
+                    >
+                      {pageNumber}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="employee-page-btn"
+                    onClick={() => setEmployeePage((current) => Math.min(totalEmployeePages, current + 1))}
+                    disabled={employeePage === totalEmployeePages}
+                    aria-label="Next employee page"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           <div className="employee-performance-circles">
             {dataLoading
               ? Array.from({ length: 6 }).map((_, index) => (
@@ -585,7 +691,7 @@ const AdminAnalytics = ({ employees, assignments, authFetch, showNotification, d
                     </div>
                   </div>
                 ))
-              : performanceData.map((emp) => {
+              : paginatedPerformanceData.map((emp) => {
                   const progressPercentage = emp.averageProgress;
                   const radius = 35;
                   const circumference = 2 * Math.PI * radius;

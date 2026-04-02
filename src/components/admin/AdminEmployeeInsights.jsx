@@ -39,10 +39,22 @@ const monthKeyFromDate = (value) => {
 
 const createMonthDate = (monthKey) => new Date(`${monthKey}-01T00:00:00`);
 
+const compareMonthKeys = (left, right) => createMonthDate(left).getTime() - createMonthDate(right).getTime();
+
 const shiftMonth = (monthKey, delta) => {
   const date = createMonthDate(monthKey);
   date.setMonth(date.getMonth() + delta);
   return monthKeyFromDate(date);
+};
+
+const clampMonthKey = (monthKey, minMonthKey, maxMonthKey) => {
+  if (compareMonthKeys(monthKey, minMonthKey) < 0) {
+    return minMonthKey;
+  }
+  if (compareMonthKeys(monthKey, maxMonthKey) > 0) {
+    return maxMonthKey;
+  }
+  return monthKey;
 };
 
 const normalizeStatus = (status, holidayName) => {
@@ -151,6 +163,14 @@ const AdminEmployeeInsights = ({ employees, assignments, authFetch, showNotifica
   }, [assignments, employees, searchEmpId]);
 
   useEffect(() => {
+    if (!selectedEmployee?.createdAt) {
+      return;
+    }
+
+    setSelectedMonth(monthKeyFromDate(selectedEmployee.createdAt));
+  }, [selectedEmployee?.createdAt]);
+
+  useEffect(() => {
     const loadAttendance = async () => {
       if (!searchEmpId) {
         setSelectedAttendance(null);
@@ -183,6 +203,19 @@ const AdminEmployeeInsights = ({ employees, assignments, authFetch, showNotifica
     selectedAttendance?.joinedDate ||
     (selectedEmployee?.createdAt ? String(selectedEmployee.createdAt).slice(0, 10) : null);
 
+  const joinMonthKey = useMemo(() => monthKeyFromDate(joinedDate), [joinedDate]);
+  const currentMonthKey = useMemo(() => monthKeyFromDate(), []);
+  const boundedSelectedMonth = useMemo(
+    () => clampMonthKey(selectedMonth, joinMonthKey, currentMonthKey),
+    [currentMonthKey, joinMonthKey, selectedMonth]
+  );
+
+  useEffect(() => {
+    if (selectedMonth !== boundedSelectedMonth) {
+      setSelectedMonth(boundedSelectedMonth);
+    }
+  }, [boundedSelectedMonth, selectedMonth]);
+
   const joinedDateLabel = useMemo(() => {
     if (!joinedDate) {
       return "Join date unavailable";
@@ -198,21 +231,58 @@ const AdminEmployeeInsights = ({ employees, assignments, authFetch, showNotifica
   const monthTitle = useMemo(() => {
     const sourceMonth = selectedAttendance?.calendarMonth
       ? String(selectedAttendance.calendarMonth).slice(0, 7)
-      : selectedMonth;
+      : boundedSelectedMonth;
 
     return createMonthDate(sourceMonth).toLocaleDateString([], {
       month: "long",
       year: "numeric",
     });
-  }, [selectedAttendance?.calendarMonth, selectedMonth]);
+  }, [boundedSelectedMonth, selectedAttendance?.calendarMonth]);
+
+  const taskMonthTitle = useMemo(
+    () =>
+      createMonthDate(boundedSelectedMonth).toLocaleDateString([], {
+        month: "long",
+        year: "numeric",
+      }),
+    [boundedSelectedMonth]
+  );
 
   const calendarSourceDays = useMemo(() => {
     if (selectedAttendance?.calendarDays?.length) {
       return selectedAttendance.calendarDays;
     }
 
-    return buildFallbackCalendarDays(selectedMonth, joinedDate, selectedAttendance?.today);
-  }, [joinedDate, selectedAttendance?.calendarDays, selectedAttendance?.today, selectedMonth]);
+    return buildFallbackCalendarDays(boundedSelectedMonth, joinedDate, selectedAttendance?.today);
+  }, [boundedSelectedMonth, joinedDate, selectedAttendance?.calendarDays, selectedAttendance?.today]);
+
+  const monthlyAssignments = useMemo(() => {
+    if (!selectedEmployee) {
+      return [];
+    }
+
+    const monthStart = createMonthDate(boundedSelectedMonth);
+    const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0, 23, 59, 59, 999);
+    const joinedDateTime = joinedDate ? new Date(`${joinedDate}T00:00:00`) : null;
+
+    return [...selectedEmployee.assignments]
+      .filter((assignment) => {
+        if (!assignment.assignedAt) {
+          return false;
+        }
+
+        const assignedAt = new Date(assignment.assignedAt);
+        if (joinedDateTime && assignedAt < joinedDateTime) {
+          return false;
+        }
+
+        return assignedAt >= monthStart && assignedAt <= monthEnd;
+      })
+      .sort((left, right) => new Date(right.assignedAt) - new Date(left.assignedAt));
+  }, [boundedSelectedMonth, joinedDate, selectedEmployee]);
+
+  const canMoveToPreviousMonth = compareMonthKeys(boundedSelectedMonth, joinMonthKey) > 0;
+  const canMoveToNextMonth = compareMonthKeys(boundedSelectedMonth, currentMonthKey) < 0;
 
   const calendarCells = useMemo(() => {
     if (!calendarSourceDays.length) {
@@ -258,7 +328,6 @@ const AdminEmployeeInsights = ({ employees, assignments, authFetch, showNotifica
             onChange={(event) => {
               const nextEmpId = event.target.value;
               setSearchEmpId(nextEmpId);
-              setSelectedMonth(monthKeyFromDate());
             }}
           >
             <option value="">Select an employee...</option>
@@ -306,15 +375,42 @@ const AdminEmployeeInsights = ({ employees, assignments, authFetch, showNotifica
           </div>
 
           <div className="employee-insights-section">
-            <div className="employee-insights-title">
-              <ClipboardList size={18} />
-              Task Statuses
+            <div className="employee-insights-section-header">
+              <div className="employee-insights-title">
+                <ClipboardList size={18} />
+                Task Statuses
+              </div>
+              <div className="employee-insights-month-nav" aria-label="Task month navigation">
+                <button
+                  type="button"
+                  className="employee-insights-calendar-btn"
+                  onClick={() => setSelectedMonth((current) => shiftMonth(current, -1))}
+                  disabled={!canMoveToPreviousMonth}
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="employee-insights-month-chip">{taskMonthTitle}</span>
+                <button
+                  type="button"
+                  className="employee-insights-calendar-btn"
+                  onClick={() => setSelectedMonth((current) => shiftMonth(current, 1))}
+                  disabled={!canMoveToNextMonth}
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
             </div>
             <div className="task-status-grid">
-              {selectedEmployee.assignments.length > 0 ? (
-                selectedEmployee.assignments.map((assignment) => (
+              {monthlyAssignments.length > 0 ? (
+                monthlyAssignments.map((assignment) => (
                   <div key={assignment.id} className="task-status-item">
-                    <span className="task-title">{assignment.task?.title}</span>
+                    <div className="task-status-copy">
+                      <span className="task-title">{assignment.task?.title}</span>
+                      <small className="task-assignment-meta">
+                        Assigned {formatDateTime(assignment.assignedAt)}
+                        {assignment.dueDate ? ` • Due ${new Date(`${assignment.dueDate}T00:00:00`).toLocaleDateString()}` : ""}
+                      </small>
+                    </div>
                     <div className="task-progress">
                       <div className="progress-track-small">
                         <div
@@ -330,7 +426,9 @@ const AdminEmployeeInsights = ({ employees, assignments, authFetch, showNotifica
                   </div>
                 ))
               ) : (
-                <div className="employee-insights-empty subtle">No tasks assigned to this employee yet.</div>
+                <div className="employee-insights-empty subtle">
+                  No tasks were assigned in {taskMonthTitle}. Task history starts from the employee&apos;s join month.
+                </div>
               )}
             </div>
           </div>
@@ -369,6 +467,7 @@ const AdminEmployeeInsights = ({ employees, assignments, authFetch, showNotifica
                   type="button"
                   className="employee-insights-calendar-btn"
                   onClick={() => setSelectedMonth((current) => shiftMonth(current, -1))}
+                  disabled={!canMoveToPreviousMonth}
                 >
                   <ChevronLeft size={16} />
                 </button>
@@ -377,6 +476,7 @@ const AdminEmployeeInsights = ({ employees, assignments, authFetch, showNotifica
                   type="button"
                   className="employee-insights-calendar-btn"
                   onClick={() => setSelectedMonth((current) => shiftMonth(current, 1))}
+                  disabled={!canMoveToNextMonth}
                 >
                   <ChevronRight size={16} />
                 </button>
