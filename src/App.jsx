@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
 import HomePage from "./pages/HomePage";
@@ -30,9 +30,10 @@ const isEmployeeRole = (role) => {
 
 const RequireAuth = ({ children }) => {
   const { isAuthenticated } = useAuth();
+  const location = useLocation();
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />;
   }
 
   return children;
@@ -45,10 +46,11 @@ const RequireAuth = ({ children }) => {
 
 const RequireAdmin = ({ children }) => {
   const { isAuthenticated, user } = useAuth();
+  const location = useLocation();
   const role = normalizeRole(user?.role);
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />;
   }
 
   if (isEmployeeRole(role)) {
@@ -69,10 +71,12 @@ const RequireAdmin = ({ children }) => {
 
 const RequireEmployee = ({ children }) => {
   const { isAuthenticated, user } = useAuth();
+  const location = useLocation();
   const role = normalizeRole(user?.role);
+  const currentPath = `${location.pathname}${location.search}`;
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ from: currentPath }} />;
   }
 
   if (isAdminRole(role)) {
@@ -81,6 +85,10 @@ const RequireEmployee = ({ children }) => {
 
   if (!isEmployeeRole(role)) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (user?.passwordResetRequired && location.pathname !== "/employee/update-password") {
+    return <Navigate to="/employee/update-password" replace />;
   }
 
   return children;

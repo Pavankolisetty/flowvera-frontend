@@ -390,6 +390,38 @@
   font: inherit;
 }
 
+.account-password-control {
+  position: relative;
+}
+
+.account-password-control input {
+  padding-right: 46px;
+}
+
+.account-password-toggle {
+  position: absolute;
+  right: 12px;
+  top: calc(50% + 3px);
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.account-password-toggle:hover,
+.account-password-toggle:focus-visible {
+  background: rgba(31, 41, 51, 0.08);
+  color: #1f2933;
+  outline: none;
+}
+
 .account-action-btn {
   border: none;
   border-radius: 999px;

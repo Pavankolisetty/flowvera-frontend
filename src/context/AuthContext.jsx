@@ -30,6 +30,7 @@ export function AuthProvider({ children }) {
       role: authData.role,
       designation: authData.designation,
       phone: authData.phone,
+      passwordResetRequired: Boolean(authData.passwordResetRequired),
     };
 
     setUser(nextUser);

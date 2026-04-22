@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Check, Mail, Phone, Shield, User, X } from "lucide-react";
+import { ArrowLeft, Check, Eye, EyeOff, Mail, Phone, Shield, User, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
 const initialPasswordState = {
@@ -15,6 +15,11 @@ export default function AccountPanel({ open, mode = "profile", onClose, variant 
   const [editing, setEditing] = useState(mode === "edit");
   const [formData, setFormData] = useState({ name: "", email: "", phone: "" });
   const [passwordData, setPasswordData] = useState(initialPasswordState);
+  const [visiblePasswords, setVisiblePasswords] = useState({
+    oldPassword: false,
+    newPassword: false,
+    confirmPassword: false,
+  });
   const [status, setStatus] = useState({ loading: false, error: "", success: "" });
   const authFetchRef = useRef(authFetch);
   const updateUserRef = useRef(updateUser);
@@ -31,7 +36,12 @@ export default function AccountPanel({ open, mode = "profile", onClose, variant 
 
     setPanelMode(mode);
     setEditing(mode === "edit");
-    setStatus({ loading: false, error: "", success: "" });
+      setStatus({ loading: false, error: "", success: "" });
+      setVisiblePasswords({
+        oldPassword: false,
+        newPassword: false,
+        confirmPassword: false,
+      });
   }, [open, mode]);
 
   useEffect(() => {
@@ -145,6 +155,7 @@ export default function AccountPanel({ open, mode = "profile", onClose, variant 
 
       setStatus({ loading: false, error: "", success: "Password updated. Please sign in again." });
       setPasswordData(initialPasswordState);
+      updateUser({ passwordResetRequired: false });
       setTimeout(async () => {
         await logout();
         window.location.href = "/login";
@@ -152,6 +163,39 @@ export default function AccountPanel({ open, mode = "profile", onClose, variant 
     } catch (error) {
       setStatus({ loading: false, error: error.message, success: "" });
     }
+  };
+
+  const renderPasswordInput = (field, label, autoComplete) => {
+    const isVisible = visiblePasswords[field];
+    const inputId = `account-${field}`;
+
+    return (
+      <div className="form-group">
+        <label htmlFor={inputId}>{label}</label>
+        <div className="account-password-control">
+          <input
+            id={inputId}
+            type={isVisible ? "text" : "password"}
+            value={passwordData[field]}
+            autoComplete={autoComplete}
+            onChange={(event) =>
+              setPasswordData((current) => ({ ...current, [field]: event.target.value }))
+            }
+            required
+          />
+          <button
+            type="button"
+            className="account-password-toggle"
+            onClick={() =>
+              setVisiblePasswords((current) => ({ ...current, [field]: !current[field] }))
+            }
+            aria-label={isVisible ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
+          >
+            {isVisible ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </div>
+      </div>
+    );
   };
 
   const content = (
@@ -200,39 +244,9 @@ export default function AccountPanel({ open, mode = "profile", onClose, variant 
 
       {panelMode === "password" ? (
         <form className="account-password-form" onSubmit={handlePasswordSave}>
-          <div className="form-group">
-            <label>Current Password</label>
-            <input
-              type="password"
-              value={passwordData.oldPassword}
-              onChange={(event) =>
-                setPasswordData((current) => ({ ...current, oldPassword: event.target.value }))
-              }
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>New Password</label>
-            <input
-              type="password"
-              value={passwordData.newPassword}
-              onChange={(event) =>
-                setPasswordData((current) => ({ ...current, newPassword: event.target.value }))
-              }
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Confirm New Password</label>
-            <input
-              type="password"
-              value={passwordData.confirmPassword}
-              onChange={(event) =>
-                setPasswordData((current) => ({ ...current, confirmPassword: event.target.value }))
-              }
-              required
-            />
-          </div>
+          {renderPasswordInput("oldPassword", "Current Password", "current-password")}
+          {renderPasswordInput("newPassword", "New Password", "new-password")}
+          {renderPasswordInput("confirmPassword", "Confirm New Password", "new-password")}
           <button type="submit" className="password-submit-btn" disabled={status.loading}>
             {status.loading ? "Updating..." : "Update Password"}
           </button>

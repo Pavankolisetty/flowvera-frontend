@@ -23,6 +23,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { login } = useAuth()
+  const returnTo = location.state?.from
 
   useEffect(() => {
     // Check if there's a success message from password update
@@ -61,7 +62,13 @@ export default function LoginPage() {
       
       // Redirect based on user role
       const role = normalizeRole(data.role)
-      if (role === "ADMIN") {
+      if (role !== "ADMIN" && data.passwordResetRequired) {
+        navigate("/employee/update-password", { replace: true })
+      } else if (returnTo && role !== "ADMIN" && returnTo.startsWith("/employee")) {
+        navigate(returnTo, { replace: true })
+      } else if (returnTo && role === "ADMIN" && returnTo.startsWith("/admin")) {
+        navigate(returnTo, { replace: true })
+      } else if (role === "ADMIN") {
         navigate("/admin/dashboard")
       } else {
         navigate("/employee/dashboard")
