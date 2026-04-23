@@ -62,7 +62,6 @@ export default function EmployeeHeader({ name, taskNotifications = {} }) {
         <AccountMenu
           user={authUser}
           onOpenProfile={() => navigate("/employee/profile")}
-          onOpenPassword={() => navigate("/employee/update-password")}
         />
         <button className="logout-btn" onClick={handleLogout}>
           <LogOut size={16} />

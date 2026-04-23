@@ -169,7 +169,6 @@ export default function AdminDashboard() {
               <AccountMenu
                 user={user}
                 onOpenProfile={() => navigate("/admin/account")}
-                onOpenPassword={() => navigate("/admin/account?tab=password")}
                 onCreateUser={() => navigate("/admin/create-user")}
                 showCreateUser={true}
               />

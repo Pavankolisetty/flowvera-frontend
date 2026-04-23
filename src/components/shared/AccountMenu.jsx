@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, KeyRound, PencilLine, Plus } from "lucide-react";
+import { ChevronDown, PencilLine, Plus } from "lucide-react";
 
 export default function AccountMenu({
   user,
   onOpenProfile,
-  onOpenPassword,
   onCreateUser,
   showCreateUser = false,
 }) {
@@ -60,17 +59,6 @@ export default function AccountMenu({
           >
             <PencilLine size={16} />
             <span>Edit Profile</span>
-          </button>
-          <button
-            type="button"
-            className="account-menu-item"
-            onClick={() => {
-              setOpen(false);
-              onOpenPassword?.();
-            }}
-          >
-            <KeyRound size={16} />
-            <span>Change Password</span>
           </button>
           {showCreateUser && (
             <button
