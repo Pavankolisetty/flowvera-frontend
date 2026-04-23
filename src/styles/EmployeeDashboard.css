@@ -1391,6 +1391,21 @@
   border-color: rgba(31, 41, 51, 0.08);
 }
 
+.task-detail-card.overdue {
+  border-color: rgba(185, 28, 28, 0.22);
+}
+
+.task-review-panel.overdue {
+  background: rgba(185, 28, 28, 0.08);
+  border-color: rgba(185, 28, 28, 0.2);
+}
+
+.task-review-panel.overdue .task-review-panel-title,
+.task-review-panel.overdue p,
+.task-review-panel.overdue small {
+  color: #991b1b;
+}
+
 .task-review-panel-title {
   display: flex;
   align-items: center;
@@ -1450,6 +1465,16 @@
 .task-action-btn.secondary:hover {
   background: rgba(31, 41, 51, 0.15);
   transform: translateY(-1px);
+}
+
+.task-action-btn.danger-outline {
+  background: rgba(185, 28, 28, 0.08);
+  color: #991b1b;
+  border-color: rgba(185, 28, 28, 0.2);
+}
+
+.task-action-btn.danger-outline:hover {
+  background: rgba(185, 28, 28, 0.13);
 }
 
 .task-action-btn.completed {

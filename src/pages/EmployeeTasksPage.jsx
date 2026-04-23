@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   ArrowRight,
+  AlertTriangle,
   BarChart3,
   BellRing,
   Calendar,
@@ -62,6 +63,35 @@ const formatDateTime = (value) => {
   });
 };
 
+const toDateOnly = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  date.setHours(0, 0, 0, 0);
+  return date;
+};
+
+const isTaskOverdue = (assignment) => {
+  if (!assignment?.dueDate || assignment.status === "COMPLETED") return false;
+  const dueDate = toDateOnly(assignment.dueDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return dueDate < today;
+};
+
+const canRequestDueDateExtension = (assignment) => {
+  if (!assignment?.dueDate || assignment.status === "COMPLETED" || assignment.dueDateExtensionPending) {
+    return false;
+  }
+
+  const dueDate = toDateOnly(assignment.dueDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dayBeforeDueDate = new Date(dueDate);
+  dayBeforeDueDate.setDate(dayBeforeDueDate.getDate() - 1);
+
+  return today >= dayBeforeDueDate;
+};
+
 const initialCreateForm = {
   title: "",
   description: "",
@@ -88,8 +118,11 @@ export default function EmployeeTasksPage() {
   const [assignableEmployees, setAssignableEmployees] = useState([]);
   const [status, setStatus] = useState({ loading: true, error: "" });
   const [submissionModal, setSubmissionModal] = useState({ open: false, assignmentId: null });
+  const [extensionModal, setExtensionModal] = useState({ open: false, assignmentId: null });
+  const [extensionDraft, setExtensionDraft] = useState({ requestedDueDate: "", reason: "" });
   const [selectedFile, setSelectedFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [extensionSubmitting, setExtensionSubmitting] = useState(false);
   const [notification, setNotification] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [createForm, setCreateForm] = useState(initialCreateForm);
@@ -119,6 +152,11 @@ export default function EmployeeTasksPage() {
   const activeSubmissionTask = useMemo(
     () => tasks.find((assignment) => assignment.id === submissionModal.assignmentId),
     [submissionModal.assignmentId, tasks]
+  );
+
+  const activeExtensionTask = useMemo(
+    () => tasks.find((assignment) => assignment.id === extensionModal.assignmentId),
+    [extensionModal.assignmentId, tasks]
   );
 
   const loadAssignedTasks = async () => {
@@ -386,6 +424,57 @@ export default function EmployeeTasksPage() {
     }
   };
 
+  const openExtensionModal = (assignment) => {
+    setExtensionModal({ open: true, assignmentId: assignment.id });
+    setExtensionDraft({ requestedDueDate: "", reason: "" });
+  };
+
+  const handleDueDateExtensionRequest = async () => {
+    if (!extensionModal.assignmentId || !extensionDraft.requestedDueDate || !extensionDraft.reason.trim()) {
+      setNotification({
+        title: "Missing Details",
+        message: "Please choose a new due date and add a reason.",
+        type: "error",
+      });
+      return;
+    }
+
+    setExtensionSubmitting(true);
+    try {
+      const response = await authFetch("/api/employee/due-date-extension/request", {
+        method: "POST",
+        body: JSON.stringify({
+          taskAssignmentId: extensionModal.assignmentId,
+          requestedDueDate: extensionDraft.requestedDueDate,
+          reason: extensionDraft.reason,
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.message || "Failed to send due date extension request.");
+      }
+
+      const payload = await response.json();
+      await refreshWorkspace({ silent: true });
+      setNotification({
+        title: "Extension Requested",
+        message: payload?.message || "Due date extension request sent successfully.",
+        type: "success",
+      });
+      setExtensionModal({ open: false, assignmentId: null });
+      setExtensionDraft({ requestedDueDate: "", reason: "" });
+    } catch (error) {
+      setNotification({
+        title: "Request Failed",
+        message: error.message || "Unable to send extension request.",
+        type: "error",
+      });
+    } finally {
+      setExtensionSubmitting(false);
+    }
+  };
+
   const handleCreateTask = async (event) => {
     event.preventDefault();
 
@@ -540,6 +629,36 @@ export default function EmployeeTasksPage() {
     }
   };
 
+  const handleApproveDueDateExtension = async (assignmentId) => {
+    try {
+      setReviewActionState((current) => ({ ...current, [assignmentId]: "due-date" }));
+      const response = await authFetch(`/api/employee/delegated/due-date-extension/approve/${assignmentId}`, {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.message || "Unable to approve due date extension.");
+      }
+
+      const payload = await response.json();
+      await refreshWorkspace({ silent: true });
+      setNotification({
+        title: "Extension Approved",
+        message: payload?.message || "Due date extension approved successfully.",
+        type: "success",
+      });
+    } catch (error) {
+      setNotification({
+        title: "Approval Failed",
+        message: error.message || "Unable to approve the extension request.",
+        type: "error",
+      });
+    } finally {
+      setReviewActionState((current) => ({ ...current, [assignmentId]: null }));
+    }
+  };
+
   const renderAssignedTasks = () => {
     if (tasks.length === 0) {
       return (
@@ -559,9 +678,14 @@ export default function EmployeeTasksPage() {
             (!assignment.requiresSubmission || !assignment.submissionDocPath);
           const canSubmitDocument =
             assignment.requiresSubmission && assignment.status !== "COMPLETED";
+          const overdue = isTaskOverdue(assignment);
 
           return (
-            <div className="task-detail-card" key={assignment.id} id={`task-assignment-${assignment.id}`}>
+            <div
+              className={`task-detail-card ${overdue ? "overdue" : ""}`}
+              key={assignment.id}
+              id={`task-assignment-${assignment.id}`}
+            >
               <div className="task-detail-header">
                 <div className="task-title-section">
                   <FileText size={20} className="task-icon" />
@@ -604,6 +728,31 @@ export default function EmployeeTasksPage() {
                     style={{ width: `${assignment.progress || 0}%` }}
                   ></div>
                 </div>
+
+                {overdue && (
+                  <div className="task-review-panel overdue">
+                    <div className="task-review-panel-title">
+                      <AlertTriangle size={16} />
+                      <span>Task overdue</span>
+                    </div>
+                    <p>
+                      This task has passed its due date. Please complete it today or request a due date extension with a clear reason.
+                    </p>
+                  </div>
+                )}
+
+                {assignment.dueDateExtensionPending && (
+                  <div className="task-review-panel waiting">
+                    <div className="task-review-panel-title">
+                      <Calendar size={16} />
+                      <span>Extension request pending</span>
+                    </div>
+                    <p>
+                      You requested a new due date of {formatDate(assignment.requestedDueDate)}.
+                      The assigner is reviewing your reason.
+                    </p>
+                  </div>
+                )}
 
                 {assignment.requiresSubmission && assignment.submissionDocPath && assignment.status !== "COMPLETED" && (
                   <div className="task-review-panel waiting">
@@ -663,6 +812,16 @@ export default function EmployeeTasksPage() {
                   >
                     <Upload size={16} />
                     {assignment.submissionDocPath ? "Resubmit Document" : "Submit Document"}
+                  </button>
+                )}
+
+                {canRequestDueDateExtension(assignment) && (
+                  <button
+                    className="task-action-btn secondary danger-outline"
+                    onClick={() => openExtensionModal(assignment)}
+                  >
+                    <Calendar size={16} />
+                    Request Due Date Extension
                   </button>
                 )}
 
@@ -870,6 +1029,19 @@ export default function EmployeeTasksPage() {
                   </div>
                 )}
 
+                {assignment.dueDateExtensionPending && (
+                  <div className="task-review-panel overdue">
+                    <div className="task-review-panel-title">
+                      <Calendar size={16} />
+                      <span>Due date extension requested</span>
+                    </div>
+                    <p>
+                      Requested due date: {formatDate(assignment.requestedDueDate)}
+                    </p>
+                    <small>Reason: {assignment.dueDateExtensionReason}</small>
+                  </div>
+                )}
+
                 {assignment.status === "CHANGES_REQUESTED" && assignment.adminReviewComments && (
                   <div className="task-review-panel feedback">
                     <div className="task-review-panel-title">
@@ -945,6 +1117,17 @@ export default function EmployeeTasksPage() {
                       {reviewActionState[assignment.id] === "accept" ? "Accepting..." : "Accept Work"}
                     </button>
                   </>
+                )}
+
+                {assignment.dueDateExtensionPending && (
+                  <button
+                    className="task-action-btn primary"
+                    onClick={() => handleApproveDueDateExtension(assignment.id)}
+                    disabled={reviewBusy}
+                  >
+                    <Calendar size={16} />
+                    {reviewActionState[assignment.id] === "due-date" ? "Approving..." : "Approve Due Date"}
+                  </button>
                 )}
               </div>
 
@@ -1107,6 +1290,75 @@ export default function EmployeeTasksPage() {
                 disabled={!selectedFile || submitting}
               >
                 {submitting ? "Submitting..." : "Submit Document"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {extensionModal.open && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>Request Due Date Extension</h3>
+              <button
+                className="modal-close-btn"
+                onClick={() => {
+                  setExtensionModal({ open: false, assignmentId: null });
+                  setExtensionDraft({ requestedDueDate: "", reason: "" });
+                }}
+              >
+                &times;
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>
+                Request more time for{" "}
+                <strong>{activeExtensionTask?.task?.title || "this task"}</strong>.
+                Share a clear reason so the assigner can decide quickly.
+              </p>
+              <div className="form-group">
+                <label>New Due Date</label>
+                <input
+                  type="date"
+                  value={extensionDraft.requestedDueDate}
+                  min={activeExtensionTask?.dueDate || undefined}
+                  onChange={(event) =>
+                    setExtensionDraft((current) => ({
+                      ...current,
+                      requestedDueDate: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="form-group">
+                <label>Reason</label>
+                <textarea
+                  rows="4"
+                  value={extensionDraft.reason}
+                  onChange={(event) =>
+                    setExtensionDraft((current) => ({ ...current, reason: event.target.value }))
+                  }
+                  placeholder="Explain why you need more time."
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="modal-btn secondary"
+                onClick={() => {
+                  setExtensionModal({ open: false, assignmentId: null });
+                  setExtensionDraft({ requestedDueDate: "", reason: "" });
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="modal-btn primary"
+                onClick={handleDueDateExtensionRequest}
+                disabled={extensionSubmitting}
+              >
+                {extensionSubmitting ? "Sending..." : "Send Request"}
               </button>
             </div>
           </div>
