@@ -14,6 +14,15 @@ const PROGRESS_OPTIONS = [
   { value: 100, label: "Completed", icon: Award, message: "Outstanding! Task completed successfully! 🎉🏆" }
 ];
 
+const formatAssignerLabel = (assignment) => {
+  const assignerId = assignment?.assignedBy || "Unknown";
+  const assignerName = assignment?.assignedByName || assignerId;
+  const role = String(assignment?.assignedByRole || "").toUpperCase();
+  const prefix = role === "ADMIN" ? "Admin" : "Employee";
+
+  return `${prefix} ${assignerName}${assignerName !== assignerId ? ` (${assignerId})` : ""}`;
+};
+
 export default function UpdateProgressPage() {
   const { assignmentId } = useParams();
   const { user, authFetch } = useAuth();
@@ -178,6 +187,7 @@ export default function UpdateProgressPage() {
             <div className="task-summary">
               <p><strong>Task:</strong> {assignment?.task?.title}</p>
               <p><strong>Description:</strong> {assignment?.task?.description}</p>
+              <p><strong>Assigned By:</strong> {formatAssignerLabel(assignment)}</p>
               <p><strong>Due Date:</strong> {assignment?.dueDate ? new Date(assignment.dueDate).toLocaleDateString() : 'No deadline'}</p>
               {assignment?.requiresSubmission && (
                 <p><strong>Submission Workflow:</strong> This task is completed only after the assigner accepts the submitted document.</p>

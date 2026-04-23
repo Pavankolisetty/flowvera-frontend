@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   ArrowRight,
   BarChart3,
@@ -14,6 +14,7 @@ import {
   Sparkles,
   Upload,
   UserPlus,
+  UserRound,
 } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -69,8 +70,18 @@ const initialCreateForm = {
   requiresSubmission: false,
 };
 
+const formatAssignerLabel = (assignment) => {
+  const assignerId = assignment.assignedBy || "Unknown";
+  const assignerName = assignment.assignedByName || assignerId;
+  const role = String(assignment.assignedByRole || "").toUpperCase();
+  const prefix = role === "ADMIN" ? "Admin" : "Employee";
+
+  return `${prefix} ${assignerName}${assignerName !== assignerId ? ` (${assignerId})` : ""}`;
+};
+
 export default function EmployeeTasksPage() {
   const { user, authFetch } = useAuth();
+  const [searchParams] = useSearchParams();
   const [activeSection, setActiveSection] = useState("assigned");
   const [tasks, setTasks] = useState([]);
   const [delegatedTasks, setDelegatedTasks] = useState([]);
@@ -87,6 +98,8 @@ export default function EmployeeTasksPage() {
   const [reviewDrafts, setReviewDrafts] = useState({});
   const [reviewActionState, setReviewActionState] = useState({});
   const [expandedReviewId, setExpandedReviewId] = useState(null);
+  const requestedSection = searchParams.get("section");
+  const requestedAssignmentId = searchParams.get("assignmentId");
 
   const taskNotifications = useMemo(
     () => ({
@@ -165,6 +178,28 @@ export default function EmployeeTasksPage() {
       throw error;
     }
   };
+
+  useEffect(() => {
+    if (requestedSection === "assigned" || requestedSection === "create" || requestedSection === "reviews") {
+      setActiveSection(requestedSection);
+    }
+  }, [requestedSection]);
+
+  useEffect(() => {
+    if (!requestedAssignmentId) {
+      return;
+    }
+
+    const targetId = `task-assignment-${requestedAssignmentId}`;
+    const timer = window.setTimeout(() => {
+      const element = document.getElementById(targetId);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 150);
+
+    return () => window.clearTimeout(timer);
+  }, [activeSection, requestedAssignmentId, tasks, delegatedTasks]);
 
   useEffect(() => {
     let isMounted = true;
@@ -526,7 +561,7 @@ export default function EmployeeTasksPage() {
             assignment.requiresSubmission && assignment.status !== "COMPLETED";
 
           return (
-            <div className="task-detail-card" key={assignment.id}>
+            <div className="task-detail-card" key={assignment.id} id={`task-assignment-${assignment.id}`}>
               <div className="task-detail-header">
                 <div className="task-title-section">
                   <FileText size={20} className="task-icon" />
@@ -557,6 +592,10 @@ export default function EmployeeTasksPage() {
                       <span>Submissions: {assignment.submissionCount || 0}</span>
                     </div>
                   )}
+                  <div className="task-meta-item">
+                    <UserRound size={16} />
+                    <span>Assigned by: {formatAssignerLabel(assignment)}</span>
+                  </div>
                 </div>
 
                 <div className="task-progress-bar">
@@ -783,7 +822,7 @@ export default function EmployeeTasksPage() {
             assignment.status !== "COMPLETED";
 
           return (
-            <div className="task-detail-card" key={assignment.id}>
+            <div className="task-detail-card" key={assignment.id} id={`task-assignment-${assignment.id}`}>
               <div className="task-detail-header">
                 <div className="task-title-section">
                   <FileText size={20} className="task-icon" />

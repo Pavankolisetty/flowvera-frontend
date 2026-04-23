@@ -367,11 +367,19 @@
 
 .task-card-meta {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
+  gap: 8px 14px;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #8a96a0;
+}
+
+.task-card-assigner {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .attendance-placeholder,

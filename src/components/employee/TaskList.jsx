@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, BarChart3, BellRing, FileCheck2, MessageSquareQuote } from "lucide-react";
+import { ArrowRight, BarChart3, BellRing, FileCheck2, MessageSquareQuote, UserRound } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
@@ -9,6 +9,15 @@ const formatStatusLabel = (status) => (status ? status.replaceAll("_", " ") : "P
 const canUpdateProgress = (assignment) =>
   assignment.status !== "COMPLETED" &&
   (!assignment.requiresSubmission || !assignment.submissionDocPath);
+
+const formatAssignerLabel = (assignment) => {
+  const assignerId = assignment.assignedBy || "Unknown";
+  const assignerName = assignment.assignedByName || assignerId;
+  const role = String(assignment.assignedByRole || "").toUpperCase();
+  const prefix = role === "ADMIN" ? "Admin" : "Assigned by";
+
+  return `${prefix}: ${assignerName}${assignerName !== assignerId ? ` (${assignerId})` : ""}`;
+};
 
 const TaskList = ({ tasks, status }) => {
   const taskCards = useMemo(() => {
@@ -30,6 +39,10 @@ const TaskList = ({ tasks, status }) => {
         <div className="task-card-meta">
           <span>Due: {assignment.dueDate || "TBD"}</span>
           <span>Progress: {assignment.progress || 0}%</span>
+          <span className="task-card-assigner">
+            <UserRound size={13} />
+            {formatAssignerLabel(assignment)}
+          </span>
         </div>
         <div className="task-card-progress">
           <div
