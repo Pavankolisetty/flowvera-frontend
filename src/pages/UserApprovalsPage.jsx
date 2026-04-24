@@ -43,7 +43,6 @@ export default function UserApprovalsPage() {
           department: "",
           designation: "",
           canAssignTask: false,
-          authorityChosen: false,
           ...current[userId],
           [field]: value,
         },
@@ -57,8 +56,8 @@ export default function UserApprovalsPage() {
 
   const approveUser = async (userId) => {
     const draft = approvalDrafts[userId] || {};
-    if (!draft.department || !draft.designation || !draft.authorityChosen) {
-      setError("Select department, role, and task authority before approving.");
+    if (!draft.department || !draft.designation) {
+      setError("Select department and role before approving.");
       return;
     }
 
@@ -121,10 +120,9 @@ export default function UserApprovalsPage() {
                 department: "",
                 designation: "",
                 canAssignTask: false,
-                authorityChosen: false,
               };
               const availableRoles = DEPARTMENT_ROLE_OPTIONS[draft.department] || [];
-              const canApprove = Boolean(draft.department && draft.designation && draft.authorityChosen);
+              const canApprove = Boolean(draft.department && draft.designation);
 
               return (
                 <article key={user.empId} className="approval-card">
@@ -179,10 +177,7 @@ export default function UserApprovalsPage() {
                     <input
                       type="checkbox"
                       checked={Boolean(draft.canAssignTask)}
-                      onChange={(event) => {
-                        handleDraftChange(user.empId, "canAssignTask", event.target.checked);
-                        handleDraftChange(user.empId, "authorityChosen", true);
-                      }}
+                      onChange={(event) => handleDraftChange(user.empId, "canAssignTask", event.target.checked)}
                     />
                     <span>Allow this user to assign tasks</span>
                   </label>
