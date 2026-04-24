@@ -25,7 +25,9 @@ export default function RegistrationPage() {
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const token = params.get("token") || "";
   const emailFromQuery = params.get("email") || "";
-  const isVerificationRoute = location.pathname === "/auth/verify-email";
+  const emailVerifiedFromQuery = params.get("emailVerified") === "1";
+  const normalizedPathname = location.pathname.replace(/\/+$/, "") || "/";
+  const isVerificationRoute = normalizedPathname === "/auth/verify-email";
 
   const [formData, setFormData] = useState({
     email: emailFromQuery,
@@ -41,9 +43,9 @@ export default function RegistrationPage() {
     completing: false,
   });
   const [state, setState] = useState({
-    emailVerified: false,
+    emailVerified: emailVerifiedFromQuery,
     phoneVerified: false,
-    message: "",
+    message: emailVerifiedFromQuery ? "Email verified successfully. Continue with phone verification." : "",
     error: "",
     debugOtp: "",
   });
@@ -69,7 +71,7 @@ export default function RegistrationPage() {
           error: "",
           message: "Email verified successfully. Continue with phone verification.",
         }));
-        navigate(`/register?email=${encodeURIComponent(verifiedEmail)}`, { replace: true });
+        navigate(`/register?email=${encodeURIComponent(verifiedEmail)}&emailVerified=1`, { replace: true });
       } catch (error) {
         setState((current) => ({ ...current, error: error.message, message: "" }));
       }
