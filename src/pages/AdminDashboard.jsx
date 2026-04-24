@@ -169,8 +169,8 @@ export default function AdminDashboard() {
               <AccountMenu
                 user={user}
                 onOpenProfile={() => navigate("/admin/account")}
-                onCreateUser={() => navigate("/admin/create-user")}
-                showCreateUser={true}
+                onOpenApprovals={() => navigate("/admin/user-approvals")}
+                showUserApprovals={true}
               />
               <button className="logout-btn" onClick={handleLogout}>
                 Logout

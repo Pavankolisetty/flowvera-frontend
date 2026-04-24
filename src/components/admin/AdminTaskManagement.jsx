@@ -202,7 +202,7 @@ const AdminTaskManagement = ({ employees, authFetch, showNotification, loadData 
             required
           >
             <option value="">Choose an employee...</option>
-            {employees.filter(emp => emp.role !== 'ADMIN').map(emp => (
+            {employees.filter(emp => emp.role !== 'ADMIN' && emp.isApproved).map(emp => (
               <option key={emp.empId} value={emp.empId}>
                 {emp.name} (ID: {emp.empId})
               </option>

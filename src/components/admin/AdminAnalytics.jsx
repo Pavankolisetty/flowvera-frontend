@@ -93,12 +93,12 @@ const inferProgressAsOf = (assignment, cutoffDate) => {
     .filter((entry) => isSameOrBefore(entry.recordedAt, cutoff))
     .at(-1);
 
-  if (latestKnownEvent) {
-    return latestKnownEvent.progress ?? 0;
+  if (isCurrentOrFutureCutoff) {
+    return assignment.progress ?? latestKnownEvent?.progress ?? 0;
   }
 
-  if (isCurrentOrFutureCutoff) {
-    return assignment.progress ?? 0;
+  if (latestKnownEvent) {
+    return latestKnownEvent.progress ?? 0;
   }
 
   return 0;

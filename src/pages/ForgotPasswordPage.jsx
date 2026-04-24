@@ -329,7 +329,7 @@ export default function ForgotPasswordPage() {
             </div>
 
             <div className="security-note">
-              <p>OTP expiry: 10 minutes • Mailtrap in dev • Gmail SMTP in production</p>
+              <p>OTP expiry: 10 minutes • email delivery depends on the configured mail provider</p>
             </div>
           </div>
         </div>

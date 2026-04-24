@@ -111,6 +111,7 @@ const formatAssignerLabel = (assignment) => {
 
 export default function EmployeeTasksPage() {
   const { user, authFetch } = useAuth();
+  const canAssignTask = user?.role === "ADMIN" || Boolean(user?.canAssignTask);
   const [searchParams] = useSearchParams();
   const [activeSection, setActiveSection] = useState("assigned");
   const [tasks, setTasks] = useState([]);
@@ -218,10 +219,10 @@ export default function EmployeeTasksPage() {
   };
 
   useEffect(() => {
-    if (requestedSection === "assigned" || requestedSection === "create" || requestedSection === "reviews") {
+    if (requestedSection === "assigned" || (canAssignTask && (requestedSection === "create" || requestedSection === "reviews"))) {
       setActiveSection(requestedSection);
     }
-  }, [requestedSection]);
+  }, [canAssignTask, requestedSection]);
 
   useEffect(() => {
     if (!requestedAssignmentId) {
@@ -1205,7 +1206,7 @@ export default function EmployeeTasksPage() {
 
         <section className="employee-quote compact">
           <span className="quote-label">Tasks</span>
-          <h2>Manage your assigned work and delegated reviews</h2>
+          <h2>{canAssignTask ? "Manage your assigned work and delegated reviews" : "Manage your assigned work"}</h2>
         </section>
 
         <div className="task-section-switcher">
@@ -1215,19 +1216,23 @@ export default function EmployeeTasksPage() {
           >
             My Tasks
           </button>
-          <button
-            className={`task-section-btn ${activeSection === "create" ? "active" : ""}`}
-            onClick={() => setActiveSection("create")}
-          >
-            Create & Assign
-          </button>
-          <button
-            className={`task-section-btn ${activeSection === "reviews" ? "active" : ""}`}
-            onClick={() => setActiveSection("reviews")}
-          >
-            Assigned By Me
-            {taskNotifications.hasDelegated && <span className="task-section-dot"></span>}
-          </button>
+          {canAssignTask && (
+            <button
+              className={`task-section-btn ${activeSection === "create" ? "active" : ""}`}
+              onClick={() => setActiveSection("create")}
+            >
+              Create & Assign
+            </button>
+          )}
+          {canAssignTask && (
+            <button
+              className={`task-section-btn ${activeSection === "reviews" ? "active" : ""}`}
+              onClick={() => setActiveSection("reviews")}
+            >
+              Assigned By Me
+              {taskNotifications.hasDelegated && <span className="task-section-dot"></span>}
+            </button>
+          )}
         </div>
 
         {status.error ? (
@@ -1238,10 +1243,12 @@ export default function EmployeeTasksPage() {
           </section>
         ) : activeSection === "assigned" ? (
           renderAssignedTasks()
-        ) : activeSection === "create" ? (
+        ) : canAssignTask && activeSection === "create" ? (
           renderCreateTask()
-        ) : (
+        ) : canAssignTask ? (
           renderDelegatedReviews()
+        ) : (
+          renderAssignedTasks()
         )}
       </div>
 

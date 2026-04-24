@@ -28,8 +28,10 @@ export function AuthProvider({ children }) {
       name: authData.name,
       email: authData.email,
       role: authData.role,
+      department: authData.department,
       designation: authData.designation,
       phone: authData.phone,
+      canAssignTask: Boolean(authData.canAssignTask),
       passwordResetRequired: Boolean(authData.passwordResetRequired),
     };
 

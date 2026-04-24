@@ -4,6 +4,7 @@ import { Toaster } from "react-hot-toast";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import RegistrationPage from "./pages/RegistrationPage";
 
 import EmployeeDashboard from "./pages/EmployeeDashboard";
 import EmployeeTasksPage from "./pages/EmployeeTasksPage";
@@ -13,7 +14,7 @@ import UpdateProgressPage from "./pages/UpdateProgressPage";
 import AdminAccountPage from "./pages/AdminAccountPage";
 
 import AdminDashboard from "./pages/AdminDashboard";
-import CreateUserPage from "./pages/CreateUserPage";
+import UserApprovalsPage from "./pages/UserApprovalsPage";
 
 import { useAuth } from "./context/AuthContext";
 
@@ -113,6 +114,8 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/register" element={<RegistrationPage />} />
+        <Route path="/auth/verify-email" element={<RegistrationPage />} />
 
 
         {/* =========================
@@ -179,10 +182,10 @@ export default function App() {
         />
 
         <Route
-          path="/admin/create-user"
+          path="/admin/user-approvals"
           element={
             <RequireAdmin>
-              <CreateUserPage />
+              <UserApprovalsPage />
             </RequireAdmin>
           }
         />

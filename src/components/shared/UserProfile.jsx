@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { User, Building, Mail, Phone, Edit3, Shield, Calendar, Plus } from "lucide-react";
+import { User, Building, Mail, Phone, Edit3, Shield, Calendar, ShieldCheck } from "lucide-react";
 
 const UserProfile = ({ user, userType = "employee", showUpdatePassword = true, authFetch, showNotification }) => {
   const isAdmin = userType === "admin";
@@ -31,11 +31,11 @@ const UserProfile = ({ user, userType = "employee", showUpdatePassword = true, a
         {isAdmin && (
           <div className="admin-actions">
             <Link 
-              to="/admin/create-user"
+              to="/admin/user-approvals"
               className="btn-create-user"
             >
-              <Plus size={16} />
-              Create New User
+              <ShieldCheck size={16} />
+              User Approvals
             </Link>
           </div>
         )}

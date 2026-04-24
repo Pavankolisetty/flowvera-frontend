@@ -168,8 +168,8 @@ export default function LoginPage() {
 
           <div className="auth-footer-note">
             <p>
-              Accounts are created and managed by administrators.<br />
-              If you need access, please contact your system admin.
+              New to Flowvera? <Link to="/register">Create your account</Link> and finish email, phone, and admin approval.<br />
+              Approved users can sign in here.
             </p>
           </div>
         </div>
