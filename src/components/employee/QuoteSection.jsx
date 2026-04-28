@@ -19,7 +19,13 @@ const getDailyQuote = () => {
   return QUOTES[dayOfYear % QUOTES.length];
 };
 
-const QuoteSection = ({ notifications = [], notificationsOpen, onOpenNotifications, onCloseNotifications }) => {
+const QuoteSection = ({
+  notifications = [],
+  notificationsOpen,
+  showNotificationCount,
+  onOpenNotifications,
+  onCloseNotifications,
+}) => {
   const dailyQuote = getDailyQuote();
 
   return (
@@ -31,6 +37,7 @@ const QuoteSection = ({ notifications = [], notificationsOpen, onOpenNotificatio
       <DashboardNotifications
         notifications={notifications}
         open={notificationsOpen}
+        showCount={showNotificationCount}
         onOpen={onOpenNotifications}
         onClose={onCloseNotifications}
       />

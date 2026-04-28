@@ -6,6 +6,46 @@ import "react-loading-skeleton/dist/skeleton.css";
 
 const formatStatusLabel = (status) => (status ? status.replaceAll("_", " ") : "PENDING");
 
+const toDateOnly = (value) => {
+  if (!value) return null;
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return null;
+  date.setHours(0, 0, 0, 0);
+  return date;
+};
+
+const daysUntilDue = (assignment) => {
+  const dueDate = toDateOnly(assignment.dueDate);
+  if (!dueDate) return Number.POSITIVE_INFINITY;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((dueDate - today) / 86400000);
+};
+
+const assignedTime = (assignment) => {
+  const date = new Date(assignment.assignedAt || 0);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+};
+
+const getPriorityRank = (assignment) => {
+  if (assignment.status === "CHANGES_REQUESTED") return 0;
+  if (daysUntilDue(assignment) < 0) return 1;
+  if (assignment.status === "UNDER_REVIEW") return 2;
+  if (daysUntilDue(assignment) <= 1) return 3;
+  if (assignment.status === "ASSIGNED" || assignment.status === "IN_PROGRESS") return 4;
+  return 5;
+};
+
+const getPriorityLabel = (assignment) => {
+  const dueInDays = daysUntilDue(assignment);
+  if (assignment.status === "CHANGES_REQUESTED") return "Needs revision";
+  if (dueInDays < 0) return "Overdue";
+  if (assignment.status === "UNDER_REVIEW") return "Waiting review";
+  if (dueInDays === 0) return "Due today";
+  if (dueInDays === 1) return "Due tomorrow";
+  return "";
+};
+
 const canUpdateProgress = (assignment) =>
   assignment.status !== "COMPLETED" &&
   (!assignment.requiresSubmission || !assignment.submissionDocPath);
@@ -20,15 +60,33 @@ const formatAssignerLabel = (assignment) => {
 };
 
 const TaskList = ({ tasks, status }) => {
+  const prioritizedTasks = useMemo(
+    () =>
+      [...tasks].sort((first, second) => {
+        const rankDiff = getPriorityRank(first) - getPriorityRank(second);
+        if (rankDiff !== 0) return rankDiff;
+        const dueDiff = daysUntilDue(first) - daysUntilDue(second);
+        if (dueDiff !== 0) return dueDiff;
+        return assignedTime(second) - assignedTime(first);
+      }),
+    [tasks]
+  );
+
   const taskCards = useMemo(() => {
-    if (!tasks.length) {
+    if (!prioritizedTasks.length) {
       return <div className="employee-empty">No active tasks assigned yet.</div>;
     }
 
-    return tasks.map((assignment) => (
-      <div className="employee-task-card" key={assignment.id}>
+    return prioritizedTasks.map((assignment) => {
+      const priorityLabel = getPriorityLabel(assignment);
+
+      return (
+        <div className={`employee-task-card priority-${getPriorityRank(assignment)}`} key={assignment.id}>
         <div className="task-card-header">
-          <h4>{assignment.task?.title || "Task"}</h4>
+          <div className="task-card-title-group">
+            <h4>{assignment.task?.title || "Task"}</h4>
+            {priorityLabel && <span className="task-priority-note">{priorityLabel}</span>}
+          </div>
           <span className={`task-status ${assignment.status?.toLowerCase() || "pending"}`}>
             {formatStatusLabel(assignment.status)}
           </span>
@@ -83,9 +141,10 @@ const TaskList = ({ tasks, status }) => {
             </Link>
           </div>
         )}
-      </div>
-    ));
-  }, [tasks]);
+        </div>
+      );
+    });
+  }, [prioritizedTasks]);
 
   return (
     <div className="employee-panel">

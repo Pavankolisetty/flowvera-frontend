@@ -3,6 +3,7 @@ import EmployeeHeader from "../components/EmployeeHeader";
 import TaskList from "../components/employee/TaskList";
 import AttendancePanel from "../components/employee/AttendancePanel";
 import QuoteSection from "../components/employee/QuoteSection";
+import TodaySummaryStrip from "../components/employee/TodaySummaryStrip";
 import FeedbackForm from "../components/shared/FeedbackForm";
 import { useAuth } from "../context/AuthContext";
 import "../styles/EmployeeDashboard.css";
@@ -23,6 +24,60 @@ const isOverdue = (assignment) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return dueDate < today;
+};
+
+const startOfWeek = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const day = today.getDay();
+  const diff = day === 0 ? 6 : day - 1;
+  today.setDate(today.getDate() - diff);
+  return today;
+};
+
+const getCompletedAt = (assignment) => {
+  if (assignment?.status !== "COMPLETED") return null;
+  const acceptedHistory = [...(assignment.progressHistory || [])]
+    .reverse()
+    .find((entry) => entry.status === "COMPLETED" || entry.source === "ACCEPTED");
+  return acceptedHistory?.recordedAt || assignment.reviewedAt || assignment.lastSubmittedAt;
+};
+
+const buildTodaySummary = (assignments = []) => {
+  const todayKey = toDateKey(new Date());
+  const weekStart = startOfWeek();
+
+  return assignments.reduce(
+    (summary, assignment) => {
+      if (assignment.status !== "COMPLETED" && assignment.dueDate === todayKey) {
+        summary.dueToday += 1;
+      }
+
+      if (isOverdue(assignment)) {
+        summary.overdue += 1;
+      }
+
+      if (assignment.status === "UNDER_REVIEW") {
+        summary.underReview += 1;
+      }
+
+      const completedAt = getCompletedAt(assignment);
+      if (completedAt) {
+        const completedDate = new Date(completedAt);
+        if (!Number.isNaN(completedDate.getTime()) && completedDate >= weekStart) {
+          summary.completedThisWeek += 1;
+        }
+      }
+
+      return summary;
+    },
+    {
+      dueToday: 0,
+      overdue: 0,
+      underReview: 0,
+      completedThisWeek: 0,
+    }
+  );
 };
 
 const taskTitle = (assignment) => assignment?.task?.title || "Task";
@@ -87,12 +142,24 @@ const buildDashboardNotifications = (assignedTasks = [], delegatedTasks = []) =>
   return notifications.slice(0, 6);
 };
 
+const notificationSeenKey = (user) =>
+  `employee-dashboard-notifications-seen:${user?.empId || user?.email || user?.name || "current"}`;
+
 export default function EmployeeDashboard() {
   const { authFetch, user } = useAuth();
   const [profileName, setProfileName] = useState(user?.name || "");
   const [tasks, setTasks] = useState([]);
+  const [todaySummary, setTodaySummary] = useState({
+    dueToday: 0,
+    overdue: 0,
+    underReview: 0,
+    completedThisWeek: 0,
+  });
   const [dashboardNotifications, setDashboardNotifications] = useState([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notificationsSeen, setNotificationsSeen] = useState(() =>
+    window.sessionStorage.getItem(notificationSeenKey(user)) === "true"
+  );
   const [taskNotifications, setTaskNotifications] = useState({
     hasAccepted: false,
     hasChanges: false,
@@ -140,12 +207,22 @@ export default function EmployeeDashboard() {
         if (isMounted) {
           setProfileName(profileData.name || user?.name || "");
           setTasks(tasksData || []);
+          setTodaySummary(buildTodaySummary(allTasksData || []));
           const notificationItems = buildDashboardNotifications(
             allTasksData || [],
             delegatedTasksData || []
           );
+          const seenKey = notificationSeenKey(user);
+          const alreadySeen = window.sessionStorage.getItem(seenKey) === "true";
           setDashboardNotifications(notificationItems);
-          setNotificationsOpen(notificationItems.length > 0);
+          setNotificationsSeen(alreadySeen);
+          if (notificationItems.length > 0 && !alreadySeen) {
+            setNotificationsOpen(true);
+            setNotificationsSeen(true);
+            window.sessionStorage.setItem(seenKey, "true");
+          } else {
+            setNotificationsOpen(false);
+          }
           setTaskNotifications({
             hasAccepted: (allTasksData || []).some(
               (task) => task.employeeNotificationUnread && task.employeeCelebrationPending
@@ -184,9 +261,20 @@ export default function EmployeeDashboard() {
         <QuoteSection
           notifications={dashboardNotifications}
           notificationsOpen={notificationsOpen}
-          onOpenNotifications={() => setNotificationsOpen(true)}
-          onCloseNotifications={() => setNotificationsOpen(false)}
+          showNotificationCount={dashboardNotifications.length > 0 && !notificationsSeen}
+          onOpenNotifications={() => {
+            setNotificationsOpen(true);
+            setNotificationsSeen(true);
+            window.sessionStorage.setItem(notificationSeenKey(user), "true");
+          }}
+          onCloseNotifications={() => {
+            setNotificationsOpen(false);
+            setNotificationsSeen(true);
+            window.sessionStorage.setItem(notificationSeenKey(user), "true");
+          }}
         />
+
+        <TodaySummaryStrip summary={todaySummary} loading={status.loading} />
 
         <section className="employee-grid">
           <TaskList tasks={tasks} status={status} />

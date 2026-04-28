@@ -9,7 +9,7 @@ const iconMap = {
   update: CalendarClock,
 };
 
-const DashboardNotifications = ({ notifications = [], open, onClose, onOpen }) => {
+const DashboardNotifications = ({ notifications = [], open, showCount = true, onClose, onOpen }) => {
   const hasNotifications = notifications.length > 0;
 
   return (
@@ -21,7 +21,7 @@ const DashboardNotifications = ({ notifications = [], open, onClose, onOpen }) =
         aria-label={hasNotifications ? "Open dashboard notifications" : "No dashboard notifications"}
       >
         <Bell size={20} />
-        {hasNotifications && (
+        {hasNotifications && showCount && (
           <span className="dashboard-notification-count">{notifications.length}</span>
         )}
       </button>
