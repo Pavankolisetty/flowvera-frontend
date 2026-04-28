@@ -1,3 +1,5 @@
+import DashboardNotifications from "./DashboardNotifications";
+
 const QUOTES = [
   "Success is the sum of small efforts repeated daily.",
   "Focus on progress, not perfection.",
@@ -17,13 +19,21 @@ const getDailyQuote = () => {
   return QUOTES[dayOfYear % QUOTES.length];
 };
 
-const QuoteSection = () => {
+const QuoteSection = ({ notifications = [], notificationsOpen, onOpenNotifications, onCloseNotifications }) => {
   const dailyQuote = getDailyQuote();
 
   return (
     <section className="employee-quote">
-      <span className="quote-label">Today's focus</span>
-      <h2>{dailyQuote}</h2>
+      <div className="quote-copy">
+        <span className="quote-label">Today's focus</span>
+        <h2>{dailyQuote}</h2>
+      </div>
+      <DashboardNotifications
+        notifications={notifications}
+        open={notificationsOpen}
+        onOpen={onOpenNotifications}
+        onClose={onCloseNotifications}
+      />
     </section>
   );
 };
