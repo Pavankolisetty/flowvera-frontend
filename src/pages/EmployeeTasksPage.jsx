@@ -116,6 +116,7 @@ export default function EmployeeTasksPage() {
   const [activeSection, setActiveSection] = useState("assigned");
   const [tasks, setTasks] = useState([]);
   const [delegatedTasks, setDelegatedTasks] = useState([]);
+  const [managedLeaveRequests, setManagedLeaveRequests] = useState([]);
   const [assignableEmployees, setAssignableEmployees] = useState([]);
   const [status, setStatus] = useState({ loading: true, error: "" });
   const [submissionModal, setSubmissionModal] = useState({ open: false, assignmentId: null });
@@ -134,6 +135,7 @@ export default function EmployeeTasksPage() {
   const [expandedReviewId, setExpandedReviewId] = useState(null);
   const requestedSection = searchParams.get("section");
   const requestedAssignmentId = searchParams.get("assignmentId");
+  const requestedLeaveRequestId = searchParams.get("leaveRequestId");
 
   const taskNotifications = useMemo(
     () => ({
@@ -145,9 +147,9 @@ export default function EmployeeTasksPage() {
       ),
       hasDelegated: delegatedTasks.some(
         (task) => task.adminNotificationUnread && task.adminNotificationMessage
-      ),
+      ) || managedLeaveRequests.some((request) => request.managerNotificationUnread),
     }),
-    [tasks, delegatedTasks]
+    [tasks, delegatedTasks, managedLeaveRequests]
   );
 
   const activeSubmissionTask = useMemo(
@@ -193,6 +195,17 @@ export default function EmployeeTasksPage() {
     return data || [];
   };
 
+  const loadManagedLeaveRequests = async () => {
+    const response = await authFetch("/api/employee/managed-leave-requests");
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(message || "Failed to load leave requests");
+    }
+    const data = await response.json();
+    setManagedLeaveRequests(data || []);
+    return data || [];
+  };
+
   const refreshWorkspace = async ({ silent = false } = {}) => {
     if (!silent) {
       setStatus({ loading: true, error: "" });
@@ -203,6 +216,7 @@ export default function EmployeeTasksPage() {
         loadAssignedTasks(),
         loadDelegatedTasks(),
         loadAssignableEmployees(),
+        loadManagedLeaveRequests(),
       ]);
 
       if (!silent) {
@@ -219,17 +233,19 @@ export default function EmployeeTasksPage() {
   };
 
   useEffect(() => {
-    if (requestedSection === "assigned" || (canAssignTask && (requestedSection === "create" || requestedSection === "reviews"))) {
+    if (requestedSection === "assigned" || (canAssignTask && (requestedSection === "create" || requestedSection === "reviews" || requestedSection === "leave-requests"))) {
       setActiveSection(requestedSection);
     }
   }, [canAssignTask, requestedSection]);
 
   useEffect(() => {
-    if (!requestedAssignmentId) {
+    if (!requestedAssignmentId && !requestedLeaveRequestId) {
       return;
     }
 
-    const targetId = `task-assignment-${requestedAssignmentId}`;
+    const targetId = requestedLeaveRequestId
+      ? `leave-request-${requestedLeaveRequestId}`
+      : `task-assignment-${requestedAssignmentId}`;
     const timer = window.setTimeout(() => {
       const element = document.getElementById(targetId);
       if (element) {
@@ -238,7 +254,7 @@ export default function EmployeeTasksPage() {
     }, 150);
 
     return () => window.clearTimeout(timer);
-  }, [activeSection, requestedAssignmentId, tasks, delegatedTasks]);
+  }, [activeSection, requestedAssignmentId, requestedLeaveRequestId, tasks, delegatedTasks, managedLeaveRequests]);
 
   useEffect(() => {
     let isMounted = true;
@@ -657,6 +673,35 @@ export default function EmployeeTasksPage() {
       });
     } finally {
       setReviewActionState((current) => ({ ...current, [assignmentId]: null }));
+    }
+  };
+
+  const handleLeaveApproval = async (requestId) => {
+    try {
+      setReviewActionState((current) => ({ ...current, [`leave-${requestId}`]: "approve" }));
+      const response = await authFetch(`/api/employee/managed-leave-requests/approve/${requestId}`, {
+        method: "POST",
+      });
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(payload?.message || "Unable to approve leave request.");
+      }
+
+      await loadManagedLeaveRequests();
+      setNotification({
+        title: "Leave Approved",
+        message: "The employee has been notified and the calendar has been updated.",
+        type: "success",
+      });
+    } catch (error) {
+      setNotification({
+        title: "Approval Failed",
+        message: error.message || "Unable to approve the leave request.",
+        type: "error",
+      });
+    } finally {
+      setReviewActionState((current) => ({ ...current, [`leave-${requestId}`]: null }));
     }
   };
 
@@ -1163,6 +1208,71 @@ export default function EmployeeTasksPage() {
     </section>
   );
 
+  const renderLeaveRequests = () => (
+    <section className="tasks-grid">
+      {managedLeaveRequests.length === 0 ? (
+        <div className="employee-panel">
+          <div className="employee-empty">No leave or WFH requests from your direct reports yet.</div>
+        </div>
+      ) : (
+        managedLeaveRequests.map((request) => {
+          const isPending = request.status === "PENDING";
+          const busy = Boolean(reviewActionState[`leave-${request.id}`]);
+          return (
+            <article
+              id={`leave-request-${request.id}`}
+              key={request.id}
+              className={`employee-task-card leave-review-card ${isPending ? "pending" : "approved"}`}
+            >
+              <div className="task-card-header">
+                <div className="task-card-title-group">
+                  <h4>{request.employeeName}</h4>
+                  <span className="task-priority-note">
+                    {String(request.type).replaceAll("_", " ")}
+                  </span>
+                </div>
+                <span className={isPending ? "task-status pending" : "task-status completed"}>
+                  {request.status}
+                </span>
+              </div>
+              <p className="task-card-desc">{request.reason}</p>
+              <div className="task-meta-grid">
+                <div className="task-meta-item">
+                  <Calendar size={16} />
+                  <span>Date: {formatDate(request.requestDate)}</span>
+                </div>
+                <div className="task-meta-item">
+                  <UserRound size={16} />
+                  <span>ID: {request.empId}</span>
+                </div>
+              </div>
+              <div className="task-detail-actions delegated-actions">
+                {isPending ? (
+                  <button
+                    type="button"
+                    className="task-action-btn primary"
+                    onClick={() => handleLeaveApproval(request.id)}
+                    disabled={busy}
+                  >
+                    <CheckCircle size={16} />
+                    {busy ? "Approving..." : "Approve Request"}
+                  </button>
+                ) : (
+                  <div className="task-review-panel accepted">
+                    <div className="task-review-panel-title">
+                      <CheckCircle size={16} />
+                      <span>Approved on {formatDateTime(request.reviewedAt)}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </article>
+          );
+        })
+      )}
+    </section>
+  );
+
   if (status.loading) {
     return (
       <div className="employee-dashboard">
@@ -1233,6 +1343,17 @@ export default function EmployeeTasksPage() {
               {taskNotifications.hasDelegated && <span className="task-section-dot"></span>}
             </button>
           )}
+          {canAssignTask && (
+            <button
+              className={`task-section-btn ${activeSection === "leave-requests" ? "active" : ""}`}
+              onClick={() => setActiveSection("leave-requests")}
+            >
+              Leave Requests
+              {managedLeaveRequests.some((request) => request.managerNotificationUnread) && (
+                <span className="task-section-dot"></span>
+              )}
+            </button>
+          )}
         </div>
 
         {status.error ? (
@@ -1245,6 +1366,8 @@ export default function EmployeeTasksPage() {
           renderAssignedTasks()
         ) : canAssignTask && activeSection === "create" ? (
           renderCreateTask()
+        ) : canAssignTask && activeSection === "leave-requests" ? (
+          renderLeaveRequests()
         ) : canAssignTask ? (
           renderDelegatedReviews()
         ) : (

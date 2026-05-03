@@ -9,6 +9,7 @@ import RegistrationPage from "./pages/RegistrationPage";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
 import EmployeeTasksPage from "./pages/EmployeeTasksPage";
 import EmployeeProfilePage from "./pages/EmployeeProfilePage";
+import LeaveRequestPage from "./pages/LeaveRequestPage";
 import UpdatePasswordPage from "./pages/UpdatePasswordPage";
 import UpdateProgressPage from "./pages/UpdateProgressPage";
 import AdminAccountPage from "./pages/AdminAccountPage";
@@ -187,6 +188,15 @@ export default function App() {
             <RequireAdmin>
               <UserApprovalsPage />
             </RequireAdmin>
+          }
+        />
+
+        <Route
+          path="/employee/leave-request"
+          element={
+            <RequireEmployee>
+              <LeaveRequestPage />
+            </RequireEmployee>
           }
         />
 

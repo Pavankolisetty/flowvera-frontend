@@ -568,6 +568,12 @@
   color: #b91c1c;
 }
 
+.attendance-badge.wfh,
+.attendance-badge.leave {
+  background: rgba(20, 184, 166, 0.14);
+  color: #0f766e;
+}
+
 .panel-header {
   display: flex;
   justify-content: space-between;
@@ -867,6 +873,224 @@
   color: #065f46;
   font-size: 13px;
   line-height: 1.5;
+}
+
+.employee-reporting-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.reporting-card {
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(31, 41, 51, 0.08);
+  box-shadow: 0 14px 28px rgba(31, 41, 51, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.reporting-card span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.reporting-card strong {
+  color: #111827;
+  font-size: 17px;
+}
+
+.reporting-card small {
+  color: #475569;
+}
+
+.attendance-legend-swatch.wfh,
+.attendance-calendar-cell.wfh {
+  background: rgba(20, 184, 166, 0.16);
+  color: #0f766e;
+  border-color: rgba(20, 184, 166, 0.32);
+}
+
+.attendance-legend-swatch.leave,
+.attendance-calendar-cell.leave {
+  background: rgba(124, 58, 237, 0.12);
+  color: #6d28d9;
+  border-color: rgba(124, 58, 237, 0.24);
+}
+
+.attendance-calendar-marker.wfh,
+.attendance-calendar-marker.leave {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: inherit;
+}
+
+.attendance-tooltip-action {
+  margin-top: 8px;
+  display: inline-flex;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: #f8fafc;
+  color: #0f172a;
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.leave-request-hero {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 24px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 18px 38px rgba(31, 41, 51, 0.1);
+}
+
+.leave-back-btn {
+  border: none;
+  border-radius: 999px;
+  background: rgba(31, 41, 51, 0.08);
+  color: #1f2933;
+  padding: 10px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.leave-request-title span {
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.leave-request-title h1 {
+  margin: 4px 0;
+  color: #111827;
+  font-size: 28px;
+}
+
+.leave-request-title p {
+  margin: 0;
+  color: #475569;
+}
+
+.leave-request-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 28px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 18px 40px rgba(31, 41, 51, 0.1);
+}
+
+.leave-request-preview {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(15, 23, 42, 0.06));
+}
+
+.leave-request-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f766e;
+  color: #fff;
+}
+
+.leave-request-preview span,
+.leave-form-grid label,
+.leave-reason-field {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.leave-request-preview strong {
+  display: block;
+  color: #111827;
+  font-size: 22px;
+}
+
+.leave-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.leave-form-grid label,
+.leave-reason-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.leave-form-grid input,
+.leave-form-grid select,
+.leave-reason-field textarea {
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 14px;
+  padding: 13px 14px;
+  font: inherit;
+  color: #0f172a;
+  background: #fff;
+}
+
+.leave-reason-field textarea {
+  min-height: 140px;
+  resize: vertical;
+}
+
+.leave-submit-btn {
+  width: fit-content;
+  border: none;
+  border-radius: 999px;
+  background: #0f172a;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 20px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.leave-submit-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.leave-success {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+  font-weight: 700;
+}
+
+.leave-review-card.pending {
+  box-shadow:
+    inset 4px 0 0 rgba(20, 184, 166, 0.85),
+    inset 0 0 0 1px rgba(31, 41, 51, 0.08);
 }
 
 .attendance-skeleton-card,
@@ -1299,6 +1523,14 @@
 .attendance-calendar-marker {
   font-weight: 700;
   color: #1d4ed8;
+}
+
+.attendance-calendar-cell.wfh .attendance-calendar-marker {
+  color: #0f766e;
+}
+
+.attendance-calendar-cell.leave .attendance-calendar-marker {
+  color: #6d28d9;
 }
 
 .attendance-calendar-tooltip {
@@ -2303,6 +2535,11 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .employee-reporting-strip,
+  .leave-form-grid {
+    grid-template-columns: 1fr;
+  }
+
   .profile-details {
     gap: 16px;
   }
@@ -2446,6 +2683,11 @@
   .attendance-calendar-grid {
     grid-template-columns: repeat(7, minmax(36px, 1fr));
     gap: 6px;
+  }
+
+  .leave-request-hero {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .attendance-calendar-cell {
