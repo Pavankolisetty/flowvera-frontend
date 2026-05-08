@@ -8,7 +8,6 @@ import {
   Search,
   Timer,
   User,
-  Home,
 } from "lucide-react";
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -71,10 +70,6 @@ const normalizeStatus = (status, holidayName) => {
         label: holidayName === "Weekly off" ? "Weekly off" : "National holiday",
         tone: holidayName === "Weekly off" ? "weekly-off" : "holiday",
       };
-    case "WFH":
-      return { label: "Work from home", tone: "wfh" };
-    case "LEAVE":
-      return { label: holidayName || "Leave approved", tone: "leave" };
     case "UPCOMING":
       return { label: "Upcoming", tone: "upcoming" };
     case "NOT_JOINED":
@@ -140,9 +135,6 @@ const AdminEmployeeInsights = ({ employees, assignments, authFetch, showNotifica
   const [selectedMonth, setSelectedMonth] = useState(monthKeyFromDate());
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [hoveredDay, setHoveredDay] = useState(null);
-  const [managerDraft, setManagerDraft] = useState("");
-  const [managerOverrides, setManagerOverrides] = useState({});
-  const [managerSaving, setManagerSaving] = useState(false);
 
   const selectedEmployee = useMemo(() => {
     if (!searchEmpId) {
@@ -157,7 +149,6 @@ const AdminEmployeeInsights = ({ employees, assignments, authFetch, showNotifica
     const empAssignments = assignments.filter((assignment) => assignment.employee?.empId === searchEmpId);
     return {
       ...employee,
-      reportingManagerEmpId: managerOverrides[employee.empId] ?? employee.reportingManagerEmpId,
       assignments: empAssignments,
       totalTasks: empAssignments.length,
       completedTasks: empAssignments.filter((assignment) => assignment.status === "COMPLETED").length,
@@ -169,7 +160,7 @@ const AdminEmployeeInsights = ({ employees, assignments, authFetch, showNotifica
             )
           : 0,
     };
-  }, [assignments, employees, managerOverrides, searchEmpId]);
+  }, [assignments, employees, searchEmpId]);
 
   useEffect(() => {
     if (!selectedEmployee?.createdAt) {
@@ -177,38 +168,7 @@ const AdminEmployeeInsights = ({ employees, assignments, authFetch, showNotifica
     }
 
     setSelectedMonth(monthKeyFromDate(selectedEmployee.createdAt));
-    setManagerDraft(selectedEmployee.reportingManagerEmpId || "");
   }, [selectedEmployee?.createdAt]);
-
-  useEffect(() => {
-    setManagerDraft(selectedEmployee?.reportingManagerEmpId || "");
-  }, [selectedEmployee?.empId, selectedEmployee?.reportingManagerEmpId]);
-
-  const saveReportingManager = async () => {
-    if (!selectedEmployee) {
-      return;
-    }
-    try {
-      setManagerSaving(true);
-      const response = await authFetch(`/api/admin/employees/${selectedEmployee.empId}/reporting-manager`, {
-        method: "PUT",
-        body: JSON.stringify({ reportingManagerEmpId: managerDraft }),
-      });
-      const payload = await response.json().catch(() => null);
-      if (!response.ok) {
-        throw new Error(payload?.message || "Failed to update reporting manager");
-      }
-      setManagerOverrides((current) => ({
-        ...current,
-        [selectedEmployee.empId]: payload?.reportingManagerEmpId || "",
-      }));
-      showNotification("Reporting manager updated successfully.", "success");
-    } catch (error) {
-      showNotification(error.message || "Failed to update reporting manager", "error");
-    } finally {
-      setManagerSaving(false);
-    }
-  };
 
   useEffect(() => {
     const loadAttendance = async () => {
@@ -353,8 +313,6 @@ const AdminEmployeeInsights = ({ employees, assignments, authFetch, showNotifica
     { tone: "absent", label: "Absent", description: "No attendance activity recorded for the day" },
     { tone: "weekly-off", label: "Weekly off", description: "Regular Sunday or scheduled day off" },
     { tone: "holiday", label: "National holiday", description: "Company or national holiday from calendar policy" },
-    { tone: "wfh", label: "WFH", description: "Approved work from home day" },
-    { tone: "leave", label: "Leave", description: "Approved casual or sick leave" },
   ];
 
   return (
@@ -414,38 +372,6 @@ const AdminEmployeeInsights = ({ employees, assignments, authFetch, showNotifica
               <span className="stat-label">Average Progress</span>
               <span className="stat-value">{selectedEmployee.averageProgress}%</span>
             </div>
-          </div>
-
-          <div className="employee-manager-editor">
-            <div>
-              <span>Reporting manager</span>
-              <strong>
-                {selectedEmployee.reportingManagerEmpId
-                  ? employees.find((employee) => employee.empId === selectedEmployee.reportingManagerEmpId)?.name || selectedEmployee.reportingManagerEmpId
-                  : "Not assigned"}
-              </strong>
-            </div>
-            <select
-              value={managerDraft}
-              onChange={(event) => setManagerDraft(event.target.value)}
-            >
-              <option value="">No manager / admin routed</option>
-              {employees
-                .filter((employee) => employee.role === "ADMIN" || employee.canAssignTask)
-                .filter((employee) => employee.empId !== selectedEmployee.empId)
-                .map((employee) => (
-                  <option key={employee.empId} value={employee.empId}>
-                    {employee.name} (ID: {employee.empId})
-                  </option>
-                ))}
-            </select>
-            <button
-              type="button"
-              onClick={saveReportingManager}
-              disabled={managerSaving || managerDraft === (selectedEmployee.reportingManagerEmpId || "")}
-            >
-              {managerSaving ? "Saving..." : "Save manager"}
-            </button>
           </div>
 
           <div className="employee-insights-section">
@@ -603,15 +529,6 @@ const AdminEmployeeInsights = ({ employees, assignments, authFetch, showNotifica
                           {formatMinutes(cell.workedMinutes)}
                         </small>
                       )}
-                      {cell.workFromHome && (
-                        <small className="employee-insights-calendar-marker wfh">
-                          <Home size={11} />
-                          WFH
-                        </small>
-                      )}
-                      {cell.status === "LEAVE" && (
-                        <small className="employee-insights-calendar-marker leave">Leave</small>
-                      )}
                       {cell.holiday && (
                         <small className="employee-insights-calendar-marker">
                           {cell.holidayName === "Weekly off" ? "Off" : "Holiday"}
@@ -621,7 +538,7 @@ const AdminEmployeeInsights = ({ employees, assignments, authFetch, showNotifica
                       {hoveredDay?.date === cell.date && (
                         <div className="employee-insights-calendar-tooltip">
                           <strong>{cell.meta.label}</strong>
-                          <span>{cell.leaveReason || cell.holidayName || formatMinutes(cell.workedMinutes)}</span>
+                          <span>{cell.holidayName || formatMinutes(cell.workedMinutes)}</span>
                           {!cell.beforeJoiningDate && !cell.futureDate && (
                             <>
                               <small>Worked: {formatMinutes(cell.workedMinutes)}</small>

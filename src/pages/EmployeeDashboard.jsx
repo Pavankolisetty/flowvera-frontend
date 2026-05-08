@@ -142,45 +142,12 @@ const buildDashboardNotifications = (assignedTasks = [], delegatedTasks = []) =>
   return notifications.slice(0, 6);
 };
 
-const buildLeaveNotifications = (myLeaveRequests = [], managedLeaveRequests = []) => {
-  const notifications = [];
-
-  managedLeaveRequests.forEach((request) => {
-    if (!request.managerNotificationUnread || request.status !== "PENDING") {
-      return;
-    }
-    notifications.push({
-      id: `leave-manager-${request.id}`,
-      type: "approval",
-      title: "Leave approval pending",
-      message: `${request.employeeName} requested ${String(request.type).replaceAll("_", " ")} for ${request.requestDate}.`,
-      to: `/employee/tasks?section=leave-requests&leaveRequestId=${request.id}`,
-    });
-  });
-
-  myLeaveRequests.forEach((request) => {
-    if (!request.employeeNotificationUnread || !request.employeeNotificationMessage) {
-      return;
-    }
-    notifications.push({
-      id: `leave-employee-${request.id}`,
-      type: "success",
-      title: "Leave approved",
-      message: request.employeeNotificationMessage,
-      to: "/employee/dashboard",
-    });
-  });
-
-  return notifications;
-};
-
 const notificationSeenKey = (user) =>
   `employee-dashboard-notifications-seen:${user?.empId || user?.email || user?.name || "current"}`;
 
 export default function EmployeeDashboard() {
   const { authFetch, user } = useAuth();
   const [profileName, setProfileName] = useState(user?.name || "");
-  const [profile, setProfile] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [todaySummary, setTodaySummary] = useState({
     dueToday: 0,
@@ -205,20 +172,11 @@ export default function EmployeeDashboard() {
 
     const loadDashboard = async () => {
       try {
-        const [
-          profileResponse,
-          tasksResponse,
-          allTasksResponse,
-          delegatedTasksResponse,
-          myLeaveResponse,
-          managedLeaveResponse,
-        ] = await Promise.all([
+        const [profileResponse, tasksResponse, allTasksResponse, delegatedTasksResponse] = await Promise.all([
           authFetch("/api/employee/me"),
           authFetch("/api/employee/my-tasks/active"),
           authFetch("/api/employee/my-tasks"),
           authFetch("/api/employee/delegated-tasks"),
-          authFetch("/api/employee/leave-requests"),
-          authFetch("/api/employee/managed-leave-requests"),
         ]);
 
         if (!profileResponse.ok) {
@@ -241,28 +199,19 @@ export default function EmployeeDashboard() {
           throw new Error(message || "Failed to load delegated task notifications");
         }
 
-        if (!myLeaveResponse.ok || !managedLeaveResponse.ok) {
-          throw new Error("Failed to load leave request notifications");
-        }
-
         const profileData = await profileResponse.json();
         const tasksData = await tasksResponse.json();
         const allTasksData = await allTasksResponse.json();
         const delegatedTasksData = await delegatedTasksResponse.json();
-        const myLeaveData = await myLeaveResponse.json();
-        const managedLeaveData = await managedLeaveResponse.json();
 
         if (isMounted) {
-          setProfile(profileData);
           setProfileName(profileData.name || user?.name || "");
           setTasks(tasksData || []);
           setTodaySummary(buildTodaySummary(allTasksData || []));
           const notificationItems = buildDashboardNotifications(
             allTasksData || [],
             delegatedTasksData || []
-          )
-            .concat(buildLeaveNotifications(myLeaveData || [], managedLeaveData || []))
-            .slice(0, 6);
+          );
           const seenKey = notificationSeenKey(user);
           const alreadySeen = window.sessionStorage.getItem(seenKey) === "true";
           setDashboardNotifications(notificationItems);
@@ -285,7 +234,7 @@ export default function EmployeeDashboard() {
             ),
             hasDelegated: (delegatedTasksData || []).some(
               (task) => task.adminNotificationUnread && task.adminNotificationMessage
-            ) || (managedLeaveData || []).some((request) => request.managerNotificationUnread),
+            ),
           });
           setStatus({ loading: false, error: "" });
         }
@@ -326,29 +275,6 @@ export default function EmployeeDashboard() {
         />
 
         <TodaySummaryStrip summary={todaySummary} loading={status.loading} />
-
-        {profile && (
-          <section className="employee-reporting-strip">
-            <div className="reporting-card">
-              <span>Your employee information</span>
-              <strong>{profile.name} ({profile.empId})</strong>
-              <small>{profile.designation || "Role not assigned"}</small>
-            </div>
-            <div className="reporting-card manager">
-              <span>Reporting manager</span>
-              <strong>
-                {profile.reportingManagerName
-                  ? `${profile.reportingManagerName} (${profile.reportingManagerEmpId})`
-                  : "Not assigned"}
-              </strong>
-              <small>
-                {profile.canAssignTask
-                  ? "You can assign work and approve leave for direct reports"
-                  : "Your task and leave approvals route to this manager"}
-              </small>
-            </div>
-          </section>
-        )}
 
         <section className="employee-grid">
           <TaskList tasks={tasks} status={status} />

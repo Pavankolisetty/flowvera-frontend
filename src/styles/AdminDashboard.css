@@ -1004,61 +1004,6 @@
   border-radius: 12px;
 }
 
-.employee-manager-editor {
-  margin-bottom: 24px;
-  display: grid;
-  grid-template-columns: minmax(180px, 1fr) minmax(220px, 1.2fr) auto;
-  gap: 14px;
-  align-items: end;
-  padding: 16px;
-  border-radius: 16px;
-  background: rgba(15, 118, 110, 0.08);
-  border: 1px solid rgba(15, 118, 110, 0.14);
-}
-
-.employee-manager-editor div {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.employee-manager-editor span {
-  color: #0f766e;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.employee-manager-editor strong {
-  color: #111827;
-  font-size: 15px;
-}
-
-.employee-manager-editor select {
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  border-radius: 12px;
-  padding: 12px 14px;
-  font: inherit;
-  color: #0f172a;
-  background: #fff;
-}
-
-.employee-manager-editor button {
-  border: none;
-  border-radius: 12px;
-  padding: 13px 16px;
-  background: #0f172a;
-  color: #fff;
-  cursor: pointer;
-  font-weight: 800;
-}
-
-.employee-manager-editor button:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
 .employee-insights-section {
   display: flex;
   flex-direction: column;
@@ -1794,28 +1739,6 @@
   font-weight: 600;
 }
 
-.employee-insights-legend-swatch.wfh,
-.employee-insights-calendar-cell.wfh {
-  background: rgba(20, 184, 166, 0.16);
-  color: #0f766e;
-  border-color: rgba(20, 184, 166, 0.32);
-}
-
-.employee-insights-legend-swatch.leave,
-.employee-insights-calendar-cell.leave {
-  background: rgba(124, 58, 237, 0.12);
-  color: #6d28d9;
-  border-color: rgba(124, 58, 237, 0.24);
-}
-
-.employee-insights-calendar-marker.wfh,
-.employee-insights-calendar-marker.leave {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-}
-
 .employee-insights-calendar-marker {
   font-weight: 700;
   color: #1d4ed8;
@@ -1826,14 +1749,6 @@
 }
 
 .employee-insights-calendar-cell.weekly-off .employee-insights-calendar-marker {
-  color: #6d28d9;
-}
-
-.employee-insights-calendar-cell.wfh .employee-insights-calendar-marker {
-  color: #0f766e;
-}
-
-.employee-insights-calendar-cell.leave .employee-insights-calendar-marker {
   color: #6d28d9;
 }
 
@@ -3241,10 +3156,6 @@
   
   .employee-stats {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .employee-manager-editor {
-    grid-template-columns: 1fr;
   }
 
   .attendance-detail-grid,

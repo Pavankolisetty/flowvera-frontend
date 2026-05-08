@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import {
   Activity,
   AlarmClock,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
-  Home,
   LogIn,
   LogOut,
   Timer,
@@ -128,10 +126,6 @@ const normalizeStatus = (status, holidayName) => {
         label: holidayName === "Weekly off" ? "Weekly off" : "National holiday",
         tone: holidayName === "Weekly off" ? "weekly-off" : "holiday",
       };
-    case "WFH":
-      return { label: "Work from home", tone: "wfh" };
-    case "LEAVE":
-      return { label: holidayName || "Leave approved", tone: "leave" };
     case "UPCOMING":
       return { label: "Upcoming", tone: "upcoming" };
     case "NOT_JOINED":
@@ -357,8 +351,6 @@ const AttendancePanel = () => {
     { tone: "absent", label: "Absent" },
     { tone: "weekly-off", label: "Weekly off" },
     { tone: "holiday", label: "National holiday" },
-    { tone: "wfh", label: "WFH" },
-    { tone: "leave", label: "Leave" },
   ];
 
   if (status.loading) {
@@ -585,21 +577,12 @@ const AttendancePanel = () => {
                 {!cell.beforeJoiningDate && !cell.futureDate && !cell.holiday && cell.workedMinutes > 0 && (
                   <small className="attendance-calendar-hours">{formatMinutes(cell.workedMinutes)}</small>
                 )}
-                {cell.workFromHome && (
-                  <small className="attendance-calendar-marker wfh">
-                    <Home size={11} />
-                    WFH
-                  </small>
-                )}
-                {cell.status === "LEAVE" && (
-                  <small className="attendance-calendar-marker leave">Leave</small>
-                )}
                 {cell.holiday && <small className="attendance-calendar-marker">Holiday</small>}
 
                 {hoveredDay?.date === cell.date && (
                   <div className="attendance-calendar-tooltip">
                     <strong>{cell.meta.label}</strong>
-                    <span>{cell.leaveReason || cell.holidayName || formatMinutes(cell.workedMinutes)}</span>
+                    <span>{cell.holidayName || formatMinutes(cell.workedMinutes)}</span>
                     {!cell.beforeJoiningDate && !cell.futureDate && (
                       <>
                         <small>Worked: {formatMinutes(cell.workedMinutes)}</small>
@@ -608,12 +591,6 @@ const AttendancePanel = () => {
                           {cell.lastClockOutAt ? "Last logout" : "Last activity"}:{" "}
                           {formatDateTime(cell.lastClockOutAt || cell.lastActivityAt)}
                         </small>
-                        <Link
-                          className="attendance-tooltip-action"
-                          to={`/employee/leave-request?date=${cell.date}`}
-                        >
-                          Apply leave or WFH
-                        </Link>
                       </>
                     )}
                   </div>

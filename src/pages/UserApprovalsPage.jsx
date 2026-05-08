@@ -9,7 +9,6 @@ export default function UserApprovalsPage() {
   const navigate = useNavigate();
   const { authFetch } = useAuth();
   const [pendingUsers, setPendingUsers] = useState([]);
-  const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submittingId, setSubmittingId] = useState("");
   const [message, setMessage] = useState("");
@@ -36,21 +35,6 @@ export default function UserApprovalsPage() {
     loadPendingUsers();
   }, []);
 
-  useEffect(() => {
-    const loadEmployees = async () => {
-      try {
-        const response = await authFetch("/api/admin/employees");
-        const payload = await response.json().catch(() => []);
-        if (response.ok) {
-          setEmployees(payload || []);
-        }
-      } catch (error) {
-        // Manager assignment remains optional if the employee list cannot be loaded.
-      }
-    };
-    loadEmployees();
-  }, [authFetch]);
-
   const handleDraftChange = (userId, field, value) => {
     setApprovalDrafts((current) => {
       const next = {
@@ -59,7 +43,6 @@ export default function UserApprovalsPage() {
           department: "",
           designation: "",
           canAssignTask: false,
-          reportingManagerEmpId: "",
           ...current[userId],
           [field]: value,
         },
@@ -137,7 +120,6 @@ export default function UserApprovalsPage() {
                 department: "",
                 designation: "",
                 canAssignTask: false,
-                reportingManagerEmpId: "",
               };
               const availableRoles = DEPARTMENT_ROLE_OPTIONS[draft.department] || [];
               const canApprove = Boolean(draft.department && draft.designation);
@@ -198,25 +180,6 @@ export default function UserApprovalsPage() {
                       onChange={(event) => handleDraftChange(user.empId, "canAssignTask", event.target.checked)}
                     />
                     <span>Allow this user to assign tasks</span>
-                  </label>
-
-                  <label className="approval-manager-field">
-                    Reporting manager
-                    <select
-                      value={draft.reportingManagerEmpId || ""}
-                      onChange={(event) => handleDraftChange(user.empId, "reportingManagerEmpId", event.target.value)}
-                    >
-                      <option value="">No manager / admin routed</option>
-                      {employees
-                        .filter((employee) => employee.role === "ADMIN" || employee.canAssignTask)
-                        .filter((employee) => employee.empId !== user.empId)
-                        .map((employee) => (
-                          <option key={employee.empId} value={employee.empId}>
-                            {employee.name} (ID: {employee.empId})
-                          </option>
-                        ))}
-                    </select>
-                    <span>Task, work approval, overdue, leave and WFH requests route to this manager.</span>
                   </label>
 
                   <button
