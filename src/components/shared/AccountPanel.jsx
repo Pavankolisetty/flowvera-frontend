@@ -89,6 +89,7 @@ export default function AccountPanel({ open, mode = "profile", onClose, variant 
 
   const fallbackDesignation = user?.role === "ADMIN" ? "Administrator" : "Associate Engineer";
   const designation = String(profile?.designation || user?.designation || "").trim() || fallbackDesignation;
+  const emailLabel = user?.role === "ADMIN" ? "Email Address / Approval Alerts" : "Email Address";
 
   if (!open) {
     return null;
@@ -299,7 +300,7 @@ export default function AccountPanel({ open, mode = "profile", onClose, variant 
             <div className="profile-field">
               <Mail size={20} />
               <div>
-                <label>Email Address</label>
+                <label>{emailLabel}</label>
                 {editing ? (
                   <input
                     value={formData.email}

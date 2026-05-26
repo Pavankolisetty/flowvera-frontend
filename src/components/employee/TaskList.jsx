@@ -53,10 +53,8 @@ const canUpdateProgress = (assignment) =>
 const formatAssignerLabel = (assignment) => {
   const assignerId = assignment.assignedBy || "Unknown";
   const assignerName = assignment.assignedByName || assignerId;
-  const role = String(assignment.assignedByRole || "").toUpperCase();
-  const prefix = role === "ADMIN" ? "Admin" : "Assigned by";
 
-  return `${prefix}: ${assignerName}${assignerName !== assignerId ? ` (${assignerId})` : ""}`;
+  return `Assigned by: ${assignerName !== assignerId ? `${assignerName} (${assignerId})` : assignerId}`;
 };
 
 const TaskList = ({ tasks, status }) => {

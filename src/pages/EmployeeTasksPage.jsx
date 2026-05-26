@@ -103,10 +103,8 @@ const initialCreateForm = {
 const formatAssignerLabel = (assignment) => {
   const assignerId = assignment.assignedBy || "Unknown";
   const assignerName = assignment.assignedByName || assignerId;
-  const role = String(assignment.assignedByRole || "").toUpperCase();
-  const prefix = role === "ADMIN" ? "Admin" : "Employee";
 
-  return `${prefix} ${assignerName}${assignerName !== assignerId ? ` (${assignerId})` : ""}`;
+  return assignerName !== assignerId ? `${assignerName} (${assignerId})` : assignerId;
 };
 
 export default function EmployeeTasksPage() {
