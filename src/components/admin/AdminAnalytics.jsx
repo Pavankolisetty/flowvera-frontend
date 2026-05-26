@@ -135,7 +135,7 @@ const AdminAnalytics = ({ employees, assignments, authFetch, showNotification, d
   const employeesPerPage = 4;
 
   const nonAdminEmployees = useMemo(
-    () => employees.filter((employee) => employee.role !== "ADMIN"),
+    () => employees.filter((employee) => employee.role !== "ADMIN" && employee.isApproved),
     [employees]
   );
 

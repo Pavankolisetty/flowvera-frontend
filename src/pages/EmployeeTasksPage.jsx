@@ -451,22 +451,22 @@ export default function EmployeeTasksPage() {
 
       if (!response.ok) {
         const payload = await response.json().catch(() => null);
-        throw new Error(payload?.message || "Failed to send due date extension request.");
+        throw new Error(payload?.message || "Failed to update due date.");
       }
 
       const payload = await response.json();
       await refreshWorkspace({ silent: true });
       setNotification({
-        title: "Extension Requested",
-        message: payload?.message || "Due date extension request sent successfully.",
+        title: "Due Date Updated",
+        message: payload?.message || "Due date updated successfully. The assigner has been notified.",
         type: "success",
       });
       setExtensionModal({ open: false, assignmentId: null });
       setExtensionDraft({ requestedDueDate: "", reason: "" });
     } catch (error) {
       setNotification({
-        title: "Request Failed",
-        message: error.message || "Unable to send extension request.",
+        title: "Update Failed",
+        message: error.message || "Unable to update the due date.",
         type: "error",
       });
     } finally {
@@ -735,7 +735,7 @@ export default function EmployeeTasksPage() {
                       <span>Task overdue</span>
                     </div>
                     <p>
-                      This task has passed its due date. Please complete it today or request a due date extension with a clear reason.
+                      This task has passed its due date. Please update the due date with a clear reason so the assigner is notified.
                     </p>
                   </div>
                 )}
@@ -820,7 +820,7 @@ export default function EmployeeTasksPage() {
                     onClick={() => openExtensionModal(assignment)}
                   >
                     <Calendar size={16} />
-                    Request Due Date Extension
+                    Update Due Date
                   </button>
                 )}
 
@@ -1305,7 +1305,7 @@ export default function EmployeeTasksPage() {
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
-              <h3>Request Due Date Extension</h3>
+              <h3>Update Due Date</h3>
               <button
                 className="modal-close-btn"
                 onClick={() => {
@@ -1320,7 +1320,7 @@ export default function EmployeeTasksPage() {
               <p>
                 Request more time for{" "}
                 <strong>{activeExtensionTask?.task?.title || "this task"}</strong>.
-                Share a clear reason so the assigner can decide quickly.
+                The new due date will be applied immediately and the assigner will receive an email acknowledgement.
               </p>
               <div className="form-group">
                 <label>New Due Date</label>
@@ -1363,7 +1363,7 @@ export default function EmployeeTasksPage() {
                 onClick={handleDueDateExtensionRequest}
                 disabled={extensionSubmitting}
               >
-                {extensionSubmitting ? "Sending..." : "Send Request"}
+                {extensionSubmitting ? "Updating..." : "Update Due Date"}
               </button>
             </div>
           </div>
