@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, CheckCircle2, Clock3, Mail, MessageSquare, Phone, Sparkles, User } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock3, Mail, MessageSquare, Phone, ShieldCheck, Sparkles, User } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 import { buildApiUrl } from "../config/api";
@@ -278,8 +278,12 @@ export default function RegistrationPage() {
             Back
           </button>
           <span className="registration-kicker">Flowvera Access</span>
-          <h1>Self-registration with verification and approval</h1>
-          <p>Complete the steps in order. Your account activates only after admin approval.</p>
+          <h1>Request secure access to your workspace.</h1>
+          <p>Verify your identity, submit your profile, and our admin team will activate your account after review.</p>
+          <div className="registration-trust-row">
+            <span><ShieldCheck size={16} /> Verified onboarding</span>
+            <span><Clock3 size={16} /> Admin-reviewed access</span>
+          </div>
           <div className="registration-summary">
             <div>
               <strong>1</strong>

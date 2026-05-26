@@ -1,4 +1,4 @@
-import { AlertTriangle, Bell, CalendarClock, CheckCircle2, ClipboardCheck, X } from "lucide-react";
+import { AlertTriangle, Bell, CalendarClock, CheckCircle2, ClipboardCheck, Inbox, X } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const iconMap = {
@@ -26,12 +26,12 @@ const DashboardNotifications = ({ notifications = [], open, showCount = true, on
         )}
       </button>
 
-      {open && hasNotifications && (
+      {open && (
         <aside className="dashboard-notification-popover" aria-label="Important dashboard notifications">
           <div className="dashboard-notification-top">
             <div>
               <span className="dashboard-notification-kicker">Notifications</span>
-              <h3>Needs attention</h3>
+              <h3>{hasNotifications ? "Needs attention" : "All clear"}</h3>
             </div>
             <button
               type="button"
@@ -44,6 +44,16 @@ const DashboardNotifications = ({ notifications = [], open, showCount = true, on
           </div>
 
           <div className="dashboard-notification-list">
+            {!hasNotifications && (
+              <div className="dashboard-notification-empty">
+                <span>
+                  <Inbox size={22} />
+                </span>
+                <strong>No notifications</strong>
+                <p>You are all caught up. New task updates and approvals will appear here.</p>
+              </div>
+            )}
+
             {notifications.map((notification) => {
               const Icon = iconMap[notification.type] || Bell;
               const content = (

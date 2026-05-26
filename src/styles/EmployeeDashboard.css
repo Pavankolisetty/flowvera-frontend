@@ -374,6 +374,42 @@
   overflow-y: auto;
 }
 
+.dashboard-notification-empty {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  min-height: 150px;
+  padding: 18px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.08), rgba(31, 41, 51, 0.04));
+  color: #47515c;
+  text-align: center;
+}
+
+.dashboard-notification-empty span {
+  width: 46px;
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #0f766e;
+  box-shadow: 0 12px 26px rgba(31, 41, 51, 0.08);
+}
+
+.dashboard-notification-empty strong {
+  color: #1f2933;
+  font-size: 15px;
+}
+
+.dashboard-notification-empty p {
+  max-width: 240px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .dashboard-notification-item {
   display: grid;
   grid-template-columns: 38px 1fr;
