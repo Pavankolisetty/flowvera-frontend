@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, PencilLine, ShieldCheck } from "lucide-react";
+import { ChevronDown, PencilLine, ShieldCheck, UsersRound } from "lucide-react";
 
 export default function AccountMenu({
   user,
   onOpenProfile,
   onOpenApprovals,
+  onOpenUserManagement,
   showUserApprovals = false,
+  showUserManagement = false,
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
@@ -71,6 +73,19 @@ export default function AccountMenu({
             >
               <ShieldCheck size={16} />
               <span>User Approvals</span>
+            </button>
+          )}
+          {showUserManagement && (
+            <button
+              type="button"
+              className="account-menu-item"
+              onClick={() => {
+                setOpen(false);
+                onOpenUserManagement?.();
+              }}
+            >
+              <UsersRound size={16} />
+              <span>User Management</span>
             </button>
           )}
         </div>

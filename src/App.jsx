@@ -15,6 +15,7 @@ import AdminAccountPage from "./pages/AdminAccountPage";
 
 import AdminDashboard from "./pages/AdminDashboard";
 import UserApprovalsPage from "./pages/UserApprovalsPage";
+import UserManagementPage from "./pages/UserManagementPage";
 
 import { useAuth } from "./context/AuthContext";
 
@@ -186,6 +187,15 @@ export default function App() {
           element={
             <RequireAdmin>
               <UserApprovalsPage />
+            </RequireAdmin>
+          }
+        />
+
+        <Route
+          path="/admin/user-management"
+          element={
+            <RequireAdmin>
+              <UserManagementPage />
             </RequireAdmin>
           }
         />

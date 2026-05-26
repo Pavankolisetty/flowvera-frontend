@@ -170,7 +170,9 @@ export default function AdminDashboard() {
                 user={user}
                 onOpenProfile={() => navigate("/admin/account")}
                 onOpenApprovals={() => navigate("/admin/user-approvals")}
+                onOpenUserManagement={() => navigate("/admin/user-management")}
                 showUserApprovals={true}
+                showUserManagement={true}
               />
               <button className="logout-btn" onClick={handleLogout}>
                 Logout
