@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2, Mail, MessageSquare, Phone, User } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, CheckCircle2, Clock3, Mail, MessageSquare, Phone, Sparkles, User } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 import { buildApiUrl } from "../config/api";
@@ -22,6 +22,7 @@ const messageFromPayload = async (response, fallback) => {
 export default function RegistrationPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const redirectTimer = useRef(null);
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const token = params.get("token") || "";
   const emailFromQuery = params.get("email") || "";
@@ -49,6 +50,15 @@ export default function RegistrationPage() {
     error: "",
     debugOtp: "",
   });
+  const [completionNotice, setCompletionNotice] = useState(null);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimer.current) {
+        clearTimeout(redirectTimer.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!isVerificationRoute || !token) {
@@ -216,7 +226,14 @@ export default function RegistrationPage() {
       if (!response.ok) {
         throw new Error(message);
       }
-      setState((current) => ({ ...current, error: "", message }));
+      setState((current) => ({ ...current, error: "", message: "" }));
+      setCompletionNotice({
+        title: "Registration submitted",
+        message: "Your account is waiting for admin approval. Once approved, your employee ID and temporary password will arrive by email.",
+      });
+      redirectTimer.current = setTimeout(() => {
+        navigate("/", { replace: true });
+      }, 4200);
     } catch (error) {
       setState((current) => ({ ...current, error: error.message, message: "" }));
     } finally {
@@ -226,6 +243,34 @@ export default function RegistrationPage() {
 
   return (
     <div className="registration-page">
+      {completionNotice && (
+        <div className="registration-complete-backdrop" role="status" aria-live="polite">
+          <div className="registration-complete-modal">
+            <div className="completion-icon">
+              <CheckCircle2 size={32} />
+            </div>
+            <span className="registration-kicker">Access request received</span>
+            <h2>{completionNotice.title}</h2>
+            <p>{completionNotice.message}</p>
+
+            <div className="completion-vision">
+              <div>
+                <Sparkles size={18} />
+                <strong>Flowvera vision</strong>
+              </div>
+              <p>
+                We build dependable workflows with clarity, ownership, and timely execution at the center of every team action.
+              </p>
+            </div>
+
+            <div className="completion-redirect">
+              <Clock3 size={16} />
+              Redirecting to home in a few seconds
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="registration-shell">
         <div className="registration-hero">
           <button className="registration-back" onClick={() => navigate("/")}>
