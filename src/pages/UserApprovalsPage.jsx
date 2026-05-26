@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2, ShieldCheck } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ShieldCheck, UsersRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { DEPARTMENTS, DEPARTMENT_ROLE_OPTIONS } from "../constants/organization";
@@ -95,6 +95,10 @@ export default function UserApprovalsPage() {
           <button className="back-btn" onClick={() => navigate("/admin/dashboard")}>
             <ArrowLeft size={18} />
             Back to dashboard
+          </button>
+          <button className="back-btn" onClick={() => navigate("/admin/user-management")}>
+            <UsersRound size={18} />
+            User Management
           </button>
           <div>
             <span className="approvals-kicker">Admin Workflow</span>
