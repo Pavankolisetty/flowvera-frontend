@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { Activity, ChevronLeft, ChevronRight, PieChart, TrendingUp } from "lucide-react";
+import { Activity, ChevronLeft, ChevronRight, Clock3, PieChart, TrendingUp } from "lucide-react";
+import { getDepartmentBrand, getEmployeeInitials } from "../../utils/departmentBranding";
 
 const formatMinutes = (minutes = 0) => {
   const hours = Math.floor(Math.max(minutes, 0) / 60);
@@ -124,10 +125,45 @@ const statusOrder = {
   ABSENT: 3,
 };
 
+const toDateOnly = (value) => {
+  if (!value) return null;
+  const date = new Date(`${value}T00:00:00`);
+  date.setHours(0, 0, 0, 0);
+  return date;
+};
+
+const summarizeEmployeeStatus = (employee, assignments) => {
+  const activeAssignments = assignments.filter(
+    (assignment) => assignment.employee?.empId === employee.empId && assignment.status !== "COMPLETED"
+  );
+  const sortedByDueDate = [...activeAssignments]
+    .filter((assignment) => assignment.dueDate)
+    .sort((left, right) => new Date(left.dueDate) - new Date(right.dueDate));
+  const nearestDueDate = sortedByDueDate[0]?.dueDate || null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dueDate = toDateOnly(nearestDueDate);
+
+  if (activeAssignments.length === 0) {
+    return { tone: "idle", label: "No Active Tasks", activeTasks: 0, nearestDueDate };
+  }
+  if (dueDate && dueDate < today) {
+    return { tone: "overdue", label: "Overdue", activeTasks: activeAssignments.length, nearestDueDate };
+  }
+  if (dueDate) {
+    const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+    if (daysUntilDue <= 2) {
+      return { tone: "soon", label: "Due Soon", activeTasks: activeAssignments.length, nearestDueDate };
+    }
+  }
+
+  return { tone: "track", label: "On Track", activeTasks: activeAssignments.length, nearestDueDate };
+};
+
 const getChartX = (index) => 50 + index * 60;
 const getChartY = (value) => 180 - value * 1.3;
 
-const AdminAnalytics = ({ employees, assignments, authFetch, showNotification, dataLoading }) => {
+const AdminAnalytics = ({ employees, assignments, authFetch, showNotification, dataLoading, onOpenEmployeeInsights }) => {
   const [todayAttendance, setTodayAttendance] = useState([]);
   const [attendanceLoading, setAttendanceLoading] = useState(true);
   const [hoveredPoint, setHoveredPoint] = useState(null);
@@ -266,6 +302,21 @@ const AdminAnalytics = ({ employees, assignments, authFetch, showNotification, d
         .filter((employee) => employee.totalTasks > 0 && employee.averageProgress < 50)
         .sort((left, right) => left.averageProgress - right.averageProgress),
     [performanceData]
+  );
+
+  const quickStatusEmployees = useMemo(
+    () =>
+      nonAdminEmployees
+        .map((employee) => ({
+          ...employee,
+          quickStatus: summarizeEmployeeStatus(employee, assignments),
+        }))
+        .sort((left, right) => {
+          const order = { overdue: 0, soon: 1, track: 2, idle: 3 };
+          return order[left.quickStatus.tone] - order[right.quickStatus.tone] || left.name.localeCompare(right.name);
+        })
+        .slice(0, 12),
+    [assignments, nonAdminEmployees]
   );
 
   const attendanceByStatus = useMemo(() => {
@@ -738,6 +789,63 @@ const AdminAnalytics = ({ employees, assignments, authFetch, showNotification, d
           </div>
         </div>
       </div>
+
+      <section className="employee-quick-status-section">
+        <div className="employee-quick-status-header">
+          <div>
+            <span className="employee-quick-kicker">Quick View</span>
+            <h3>Employee Status Cards</h3>
+          </div>
+          <small>{quickStatusEmployees.length} employees shown by priority</small>
+        </div>
+
+        <div className="employee-quick-status-grid">
+          {dataLoading
+            ? Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="employee-status-card skeleton-card">
+                  <Skeleton circle width={48} height={48} />
+                  <Skeleton width={110} height={16} />
+                  <Skeleton width={90} height={14} />
+                </div>
+              ))
+            : quickStatusEmployees.map((employee) => {
+                const brand = getDepartmentBrand(employee.department);
+                const status = employee.quickStatus;
+
+                return (
+                  <button
+                    type="button"
+                    key={employee.empId}
+                    className={`employee-status-card ${status.tone}`}
+                    style={{
+                      "--department-color": brand.color,
+                      "--department-soft": brand.softColor,
+                      "--department-border": brand.borderColor,
+                    }}
+                    title={`${employee.name} | ${employee.department || "Department pending"} | ${status.activeTasks} active task(s)`}
+                    onClick={() => onOpenEmployeeInsights?.(employee.empId)}
+                  >
+                    <div className="employee-status-avatar">
+                      <span>{getEmployeeInitials(employee.name)}</span>
+                      <small>{brand.shortName}</small>
+                    </div>
+                    <div className="employee-status-copy">
+                      <strong>{employee.name}</strong>
+                      <span>{employee.department || "Department pending"} · {employee.designation || "Team member"}</span>
+                    </div>
+                    <div className="employee-status-meta">
+                      <span className={`employee-status-pill ${status.tone}`}>{status.label}</span>
+                      <small>
+                        <Clock3 size={13} />
+                        {status.nearestDueDate ? `Due ${new Date(`${status.nearestDueDate}T00:00:00`).toLocaleDateString()}` : "No due date"}
+                      </small>
+                      <small>{status.activeTasks} active task{status.activeTasks === 1 ? "" : "s"}</small>
+                    </div>
+                  </button>
+                );
+              })}
+        </div>
+      </section>
     </div>
   );
 };

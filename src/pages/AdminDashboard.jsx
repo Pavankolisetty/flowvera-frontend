@@ -17,6 +17,7 @@ export default function AdminDashboard() {
   const [tasks, setTasks] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [assignments, setAssignments] = useState([]);
+  const [selectedInsightsEmpId, setSelectedInsightsEmpId] = useState("");
   const [dataLoading, setDataLoading] = useState(true);
   const [notification, setNotification] = useState(null);
   const notificationTimer = useRef(null);
@@ -189,6 +190,10 @@ export default function AdminDashboard() {
               authFetch={authFetch}
               showNotification={showNotification}
               dataLoading={dataLoading}
+              onOpenEmployeeInsights={(empId) => {
+                setSelectedInsightsEmpId(empId);
+                setActiveTab("employee-insights");
+              }}
             />
           )}
 
@@ -216,6 +221,7 @@ export default function AdminDashboard() {
               assignments={assignments}
               authFetch={authFetch}
               showNotification={showNotification}
+              selectedEmpId={selectedInsightsEmpId}
             />
           )}
         </div>

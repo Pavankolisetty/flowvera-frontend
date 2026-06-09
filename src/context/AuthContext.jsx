@@ -32,6 +32,7 @@ export function AuthProvider({ children }) {
       designation: authData.designation,
       phone: authData.phone,
       canAssignTask: Boolean(authData.canAssignTask),
+      departmentLead: Boolean(authData.departmentLead),
       passwordResetRequired: Boolean(authData.passwordResetRequired),
     };
 

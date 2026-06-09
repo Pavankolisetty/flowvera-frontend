@@ -3,6 +3,7 @@ import { ArrowLeft, CheckCircle2, ShieldCheck, UsersRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { DEPARTMENTS, DEPARTMENT_ROLE_OPTIONS } from "../constants/organization";
+import { getDepartmentBrand, getEmployeeInitials } from "../utils/departmentBranding";
 import "../styles/UserApprovalsPage.css";
 
 export default function UserApprovalsPage() {
@@ -14,14 +15,22 @@ export default function UserApprovalsPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [approvalDrafts, setApprovalDrafts] = useState({});
+  const [approvedEmployees, setApprovedEmployees] = useState([]);
 
   const loadPendingUsers = async () => {
     setLoading(true);
     try {
-      const response = await authFetch("/api/admin/pending-users");
+      const [response, employeesResponse] = await Promise.all([
+        authFetch("/api/admin/pending-users"),
+        authFetch("/api/admin/employees"),
+      ]);
       const payload = await response.json().catch(() => []);
       if (!response.ok) {
         throw new Error(payload?.message || "Failed to load pending users.");
+      }
+      if (employeesResponse.ok) {
+        const employeesPayload = await employeesResponse.json().catch(() => []);
+        setApprovedEmployees(employeesPayload || []);
       }
       setPendingUsers(payload || []);
     } catch (loadError) {
@@ -127,6 +136,13 @@ export default function UserApprovalsPage() {
               };
               const availableRoles = DEPARTMENT_ROLE_OPTIONS[draft.department] || [];
               const canApprove = Boolean(draft.department && draft.designation);
+              const departmentLead = approvedEmployees.find(
+                (employee) =>
+                  employee.department === draft.department &&
+                  employee.departmentLead &&
+                  employee.isApproved
+              );
+              const departmentBrand = getDepartmentBrand(draft.department);
 
               return (
                 <article key={user.empId} className="approval-card">
@@ -185,6 +201,33 @@ export default function UserApprovalsPage() {
                     />
                     <span>Allow this user to assign tasks</span>
                   </label>
+
+                  {draft.department && draft.canAssignTask && (
+                    <div
+                      className={`department-lead-notice ${departmentLead ? "existing" : "new"}`}
+                      style={{
+                        "--department-color": departmentBrand.color,
+                        "--department-soft": departmentBrand.softColor,
+                        "--department-border": departmentBrand.borderColor,
+                      }}
+                    >
+                      <div className="department-lead-avatar">
+                        {departmentLead ? getEmployeeInitials(departmentLead.name) : departmentBrand.shortName}
+                      </div>
+                      <div>
+                        <strong>
+                          {departmentLead
+                            ? `${departmentLead.name} is already the Department Lead`
+                            : `This user will become Department Lead for ${draft.department}`}
+                        </strong>
+                        <p>
+                          {departmentLead
+                            ? "Admin approval will continue without direct task authority. The existing Department Lead will receive an email request to review temporary task assignment access."
+                            : "This approval will make the user the single admin-approved Department Lead with department task assignment authority."}
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   <button
                     className="approve-btn"

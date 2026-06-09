@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Check, Eye, EyeOff, Mail, Phone, Shield, User, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { getDepartmentBrand, getEmployeeInitials } from "../../utils/departmentBranding";
 
 const initialPasswordState = {
   oldPassword: "",
@@ -63,7 +64,10 @@ export default function AccountPanel({ open, mode = "profile", onClose, variant 
           name: data.name,
           email: data.email,
           phone: data.phone,
+          department: data.department,
           designation: data.designation,
+          canAssignTask: Boolean(data.canAssignTask),
+          departmentLead: Boolean(data.departmentLead),
         });
         setFormData({
           name: data.name || "",
@@ -90,6 +94,7 @@ export default function AccountPanel({ open, mode = "profile", onClose, variant 
   const fallbackDesignation = user?.role === "ADMIN" ? "Administrator" : "Associate Engineer";
   const designation = String(profile?.designation || user?.designation || "").trim() || fallbackDesignation;
   const emailLabel = user?.role === "ADMIN" ? "Email Address / Approval Alerts" : "Email Address";
+  const departmentBrand = getDepartmentBrand(profile?.department || user?.department);
 
   if (!open) {
     return null;
@@ -256,17 +261,31 @@ export default function AccountPanel({ open, mode = "profile", onClose, variant 
         <div className="account-profile-content">
           <div className="account-identity-card">
             <div className="account-identity-top">
-              <span className="account-profile-avatar">
-                {String(profile?.name || user?.name || "U")
-                  .split(" ")
-                  .map((part) => part[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase()}
+              <span
+                className="account-profile-avatar department-avatar"
+                style={{
+                  "--department-color": departmentBrand.color,
+                  "--department-soft": departmentBrand.softColor,
+                  "--department-border": departmentBrand.borderColor,
+                }}
+              >
+                {getEmployeeInitials(profile?.name || user?.name || "U")}
               </span>
               <div>
                 <h3>{profile?.name || user?.name}</h3>
                 <p>{designation}</p>
+                {profile?.department || user?.department ? (
+                  <span
+                    className="department-profile-badge"
+                    style={{
+                      "--department-color": departmentBrand.color,
+                      "--department-soft": departmentBrand.softColor,
+                      "--department-border": departmentBrand.borderColor,
+                    }}
+                  >
+                    {departmentBrand.shortName} · {profile?.department || user?.department}
+                  </span>
+                ) : null}
               </div>
             </div>
             <div className="account-stats-grid">

@@ -129,12 +129,18 @@ const buildFallbackCalendarDays = (monthKey, joinedDate, todayOverview) => {
   return fallbackDays;
 };
 
-const AdminEmployeeInsights = ({ employees, assignments, authFetch, showNotification }) => {
+const AdminEmployeeInsights = ({ employees, assignments, authFetch, showNotification, selectedEmpId }) => {
   const [searchEmpId, setSearchEmpId] = useState("");
   const [selectedAttendance, setSelectedAttendance] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(monthKeyFromDate());
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [hoveredDay, setHoveredDay] = useState(null);
+
+  useEffect(() => {
+    if (selectedEmpId) {
+      setSearchEmpId(selectedEmpId);
+    }
+  }, [selectedEmpId]);
 
   const selectedEmployee = useMemo(() => {
     if (!searchEmpId) {

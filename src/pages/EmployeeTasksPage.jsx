@@ -12,6 +12,7 @@ import {
   MessageSquareMore,
   MessageSquareQuote,
   Send,
+  ShieldCheck,
   Sparkles,
   Upload,
   UserPlus,
@@ -107,9 +108,17 @@ const formatAssignerLabel = (assignment) => {
   return assignerName !== assignerId ? `${assignerName} (${assignerId})` : assignerId;
 };
 
+const initialAuthorityForm = {
+  empId: "",
+  startDate: "",
+  endDate: "",
+  reason: "",
+};
+
 export default function EmployeeTasksPage() {
   const { user, authFetch } = useAuth();
   const canAssignTask = user?.role === "ADMIN" || Boolean(user?.canAssignTask);
+  const isDepartmentLead = Boolean(user?.departmentLead);
   const [searchParams] = useSearchParams();
   const [activeSection, setActiveSection] = useState("assigned");
   const [tasks, setTasks] = useState([]);
@@ -130,6 +139,9 @@ export default function EmployeeTasksPage() {
   const [reviewDrafts, setReviewDrafts] = useState({});
   const [reviewActionState, setReviewActionState] = useState({});
   const [expandedReviewId, setExpandedReviewId] = useState(null);
+  const [authorityForm, setAuthorityForm] = useState(initialAuthorityForm);
+  const [authoritySubmitting, setAuthoritySubmitting] = useState(false);
+  const [authorityActionState, setAuthorityActionState] = useState({});
   const requestedSection = searchParams.get("section");
   const requestedAssignmentId = searchParams.get("assignmentId");
 
@@ -217,10 +229,14 @@ export default function EmployeeTasksPage() {
   };
 
   useEffect(() => {
-    if (requestedSection === "assigned" || (canAssignTask && (requestedSection === "create" || requestedSection === "reviews"))) {
+    if (
+      requestedSection === "assigned" ||
+      (canAssignTask && (requestedSection === "create" || requestedSection === "reviews")) ||
+      (isDepartmentLead && requestedSection === "authority")
+    ) {
       setActiveSection(requestedSection);
     }
-  }, [canAssignTask, requestedSection]);
+  }, [canAssignTask, isDepartmentLead, requestedSection]);
 
   useEffect(() => {
     if (!requestedAssignmentId) {
@@ -655,6 +671,85 @@ export default function EmployeeTasksPage() {
       });
     } finally {
       setReviewActionState((current) => ({ ...current, [assignmentId]: null }));
+    }
+  };
+
+  const temporaryAuthorityEmployees = useMemo(
+    () =>
+      assignableEmployees.filter(
+        (employee) => employee.canAssignTask && !employee.departmentLead
+      ),
+    [assignableEmployees]
+  );
+
+  const handleGrantAuthority = async (event) => {
+    event.preventDefault();
+
+    if (!authorityForm.empId || !authorityForm.startDate || !authorityForm.endDate) {
+      setNotification({
+        title: "Missing Details",
+        message: "Please choose employee, start date, and end date.",
+        type: "error",
+      });
+      return;
+    }
+
+    setAuthoritySubmitting(true);
+    try {
+      const response = await authFetch("/api/employee/task-authority/grant", {
+        method: "POST",
+        body: JSON.stringify(authorityForm),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.message || "Unable to grant task authority.");
+      }
+
+      await refreshWorkspace({ silent: true });
+      setAuthorityForm(initialAuthorityForm);
+      setNotification({
+        title: "Authority Granted",
+        message: "Temporary task assignment authority has been granted.",
+        type: "success",
+      });
+    } catch (error) {
+      setNotification({
+        title: "Authority Update Failed",
+        message: error.message || "Unable to grant task authority.",
+        type: "error",
+      });
+    } finally {
+      setAuthoritySubmitting(false);
+    }
+  };
+
+  const handleRevokeAuthority = async (empId) => {
+    try {
+      setAuthorityActionState((current) => ({ ...current, [empId]: true }));
+      const response = await authFetch(`/api/employee/task-authority/revoke/${empId}`, {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.message || "Unable to revoke task authority.");
+      }
+
+      await refreshWorkspace({ silent: true });
+      setNotification({
+        title: "Authority Revoked",
+        message: "Temporary task assignment authority has been revoked.",
+        type: "success",
+      });
+    } catch (error) {
+      setNotification({
+        title: "Revoke Failed",
+        message: error.message || "Unable to revoke task authority.",
+        type: "error",
+      });
+    } finally {
+      setAuthorityActionState((current) => ({ ...current, [empId]: false }));
     }
   };
 
@@ -1161,6 +1256,101 @@ export default function EmployeeTasksPage() {
     </section>
   );
 
+  const renderAuthorityManager = () => (
+    <section className="employee-grid single">
+      <div className="employee-panel progress-panel">
+        <div className="panel-header">
+          <h3>Team Authority</h3>
+          <span className="panel-badge">Department Lead</span>
+        </div>
+
+        <form onSubmit={handleGrantAuthority} className="task-form">
+          <div className="form-group">
+            <label>Employee *</label>
+            <select
+              value={authorityForm.empId}
+              onChange={(event) => setAuthorityForm((current) => ({ ...current, empId: event.target.value }))}
+              required
+            >
+              <option value="">Choose an employee...</option>
+              {assignableEmployees
+                .filter((employee) => !employee.departmentLead)
+                .map((employee) => (
+                  <option key={employee.empId} value={employee.empId}>
+                    {employee.name} ({employee.empId})
+                  </option>
+                ))}
+            </select>
+          </div>
+
+          <div className="task-authority-dates">
+            <div className="form-group">
+              <label>Start Date *</label>
+              <input
+                type="date"
+                value={authorityForm.startDate}
+                onChange={(event) => setAuthorityForm((current) => ({ ...current, startDate: event.target.value }))}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>End Date *</label>
+              <input
+                type="date"
+                value={authorityForm.endDate}
+                min={authorityForm.startDate || undefined}
+                onChange={(event) => setAuthorityForm((current) => ({ ...current, endDate: event.target.value }))}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Reason</label>
+            <textarea
+              value={authorityForm.reason}
+              onChange={(event) => setAuthorityForm((current) => ({ ...current, reason: event.target.value }))}
+              rows="3"
+              placeholder="Example: Backup assignment support during sprint delivery."
+            />
+          </div>
+
+          <button type="submit" className="assign-btn" disabled={authoritySubmitting}>
+            <ShieldCheck size={16} />
+            {authoritySubmitting ? "Granting Authority..." : "Grant Temporary Authority"}
+          </button>
+        </form>
+
+        <div className="task-authority-list">
+          <h4>Active Temporary Authority</h4>
+          {temporaryAuthorityEmployees.length === 0 ? (
+            <div className="employee-empty">No temporary task assignment authority is active.</div>
+          ) : (
+            temporaryAuthorityEmployees.map((employee) => (
+              <div className="task-authority-row" key={employee.empId}>
+                <div>
+                  <strong>{employee.name}</strong>
+                  <span>
+                    {employee.empId} · Valid until {employee.taskAuthorityEndDate || "not set"}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="task-action-btn secondary"
+                  onClick={() => handleRevokeAuthority(employee.empId)}
+                  disabled={Boolean(authorityActionState[employee.empId])}
+                >
+                  {authorityActionState[employee.empId] ? "Revoking..." : "Revoke"}
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </section>
+  );
+
   if (status.loading) {
     return (
       <div className="employee-dashboard">
@@ -1231,6 +1421,14 @@ export default function EmployeeTasksPage() {
               {taskNotifications.hasDelegated && <span className="task-section-dot"></span>}
             </button>
           )}
+          {isDepartmentLead && (
+            <button
+              className={`task-section-btn ${activeSection === "authority" ? "active" : ""}`}
+              onClick={() => setActiveSection("authority")}
+            >
+              Team Authority
+            </button>
+          )}
         </div>
 
         {status.error ? (
@@ -1243,6 +1441,8 @@ export default function EmployeeTasksPage() {
           renderAssignedTasks()
         ) : canAssignTask && activeSection === "create" ? (
           renderCreateTask()
+        ) : isDepartmentLead && activeSection === "authority" ? (
+          renderAuthorityManager()
         ) : canAssignTask ? (
           renderDelegatedReviews()
         ) : (

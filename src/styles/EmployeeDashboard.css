@@ -2902,6 +2902,70 @@
   box-shadow: 0 20px 44px rgba(15, 23, 42, 0.12);
 }
 
+.department-avatar {
+  background: var(--department-soft, #e2e8f0);
+  color: var(--department-color, #475569);
+  border: 1px solid var(--department-border, #cbd5e1);
+}
+
+.department-profile-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 7px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--department-soft, #e2e8f0);
+  color: var(--department-color, #475569);
+  border: 1px solid var(--department-border, #cbd5e1);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.task-authority-dates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.task-authority-list {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(15, 23, 42, 0.1);
+}
+
+.task-authority-list h4 {
+  margin: 0 0 12px;
+  color: #0f172a;
+}
+
+.task-authority-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.task-authority-row + .task-authority-row {
+  margin-top: 10px;
+}
+
+.task-authority-row strong,
+.task-authority-row span {
+  display: block;
+}
+
+.task-authority-row span {
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 13px;
+}
+
 @media (max-width: 768px) {
   .attendance-skeleton-card {
     flex-direction: column;
@@ -2935,5 +2999,14 @@
 
   .account-panel {
     padding: 20px;
+  }
+
+  .task-authority-dates {
+    grid-template-columns: 1fr;
+  }
+
+  .task-authority-row {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
