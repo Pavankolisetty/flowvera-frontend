@@ -2662,17 +2662,85 @@
   cursor: pointer;
 }
 
-.account-avatar,
-.account-profile-avatar {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
+.department-emblem {
+  position: relative;
+  isolation: isolate;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 16px;
+  color: var(--department-color, #475569);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.35)),
+    var(--department-soft, #e2e8f0);
+  border: 1px solid var(--department-border, #cbd5e1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 10px 24px rgba(15, 23, 42, 0.12);
+  overflow: hidden;
+}
+
+.department-emblem::before {
+  content: "";
+  position: absolute;
+  inset: auto -18% -28% 30%;
+  height: 70%;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--department-color, #475569) 20%, transparent);
+  transform: rotate(-18deg);
+  z-index: -1;
+}
+
+.department-emblem.sm {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+}
+
+.department-emblem.lg {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+}
+
+.department-emblem-mark {
+  position: absolute;
+  top: 7px;
+  right: 7px;
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #0f766e, #0f172a);
-  color: #fff;
-  font-weight: 700;
+  color: var(--department-color, #475569);
+  opacity: 0.9;
+}
+
+.department-emblem-initials {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0;
+  color: #0f172a;
+}
+
+.department-emblem.lg .department-emblem-initials {
+  font-size: 18px;
+}
+
+.department-emblem-code {
+  position: absolute;
+  left: 8px;
+  bottom: 6px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: color-mix(in srgb, var(--department-color, #475569) 82%, #0f172a);
+}
+
+.account-avatar {
+  width: 48px;
+  height: 48px;
+}
+
+.account-profile-avatar {
+  width: 64px;
+  height: 64px;
 }
 
 .account-trigger-copy {
@@ -2900,12 +2968,6 @@
   border-radius: 28px;
   padding: 28px;
   box-shadow: 0 20px 44px rgba(15, 23, 42, 0.12);
-}
-
-.department-avatar {
-  background: var(--department-soft, #e2e8f0);
-  color: var(--department-color, #475569);
-  border: 1px solid var(--department-border, #cbd5e1);
 }
 
 .department-profile-badge {

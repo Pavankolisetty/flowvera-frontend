@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, PencilLine, ShieldCheck, UsersRound } from "lucide-react";
+import DepartmentEmblem from "./DepartmentEmblem";
 
 export default function AccountMenu({
   user,
@@ -23,15 +24,9 @@ export default function AccountMenu({
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
-  const initials = String(user?.name || "U")
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
   const fallbackDesignation = user?.role === "ADMIN" ? "Administrator" : "Associate Engineer";
   const designation = String(user?.designation || "").trim() || fallbackDesignation;
+  const departmentLabel = user?.role === "ADMIN" ? "Admin Console" : user?.department || "Team";
 
   return (
     <div className="account-menu" ref={containerRef}>
@@ -41,10 +36,10 @@ export default function AccountMenu({
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
       >
-        <span className="account-avatar">{initials}</span>
+        <DepartmentEmblem department={user?.department} name={user?.name} size="md" className="account-avatar" />
         <span className="account-trigger-copy">
           <strong>{user?.name || "Account"}</strong>
-          <small>{designation}</small>
+          <small>{departmentLabel} · {designation}</small>
         </span>
         <ChevronDown size={16} className={`account-trigger-arrow ${open ? "open" : ""}`} />
       </button>

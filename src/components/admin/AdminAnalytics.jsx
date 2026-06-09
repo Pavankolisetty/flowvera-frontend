@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { Activity, ChevronLeft, ChevronRight, Clock3, PieChart, TrendingUp } from "lucide-react";
-import { getDepartmentBrand, getEmployeeInitials } from "../../utils/departmentBranding";
+import DepartmentEmblem from "../shared/DepartmentEmblem";
+import { getDepartmentBrand } from "../../utils/departmentBranding";
 
 const formatMinutes = (minutes = 0) => {
   const hours = Math.floor(Math.max(minutes, 0) / 60);
@@ -825,10 +826,12 @@ const AdminAnalytics = ({ employees, assignments, authFetch, showNotification, d
                     title={`${employee.name} | ${employee.department || "Department pending"} | ${status.activeTasks} active task(s)`}
                     onClick={() => onOpenEmployeeInsights?.(employee.empId)}
                   >
-                    <div className="employee-status-avatar">
-                      <span>{getEmployeeInitials(employee.name)}</span>
-                      <small>{brand.shortName}</small>
-                    </div>
+                    <DepartmentEmblem
+                      department={employee.department}
+                      name={employee.name}
+                      size="lg"
+                      className="employee-status-avatar"
+                    />
                     <div className="employee-status-copy">
                       <strong>{employee.name}</strong>
                       <span>{employee.department || "Department pending"} · {employee.designation || "Team member"}</span>

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Check, Eye, EyeOff, Mail, Phone, Shield, User, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { getDepartmentBrand, getEmployeeInitials } from "../../utils/departmentBranding";
+import { getDepartmentBrand } from "../../utils/departmentBranding";
+import DepartmentEmblem from "./DepartmentEmblem";
 
 const initialPasswordState = {
   oldPassword: "",
@@ -261,16 +262,12 @@ export default function AccountPanel({ open, mode = "profile", onClose, variant 
         <div className="account-profile-content">
           <div className="account-identity-card">
             <div className="account-identity-top">
-              <span
-                className="account-profile-avatar department-avatar"
-                style={{
-                  "--department-color": departmentBrand.color,
-                  "--department-soft": departmentBrand.softColor,
-                  "--department-border": departmentBrand.borderColor,
-                }}
-              >
-                {getEmployeeInitials(profile?.name || user?.name || "U")}
-              </span>
+              <DepartmentEmblem
+                department={profile?.department || user?.department}
+                name={profile?.name || user?.name}
+                size="lg"
+                className="account-profile-avatar"
+              />
               <div>
                 <h3>{profile?.name || user?.name}</h3>
                 <p>{designation}</p>
