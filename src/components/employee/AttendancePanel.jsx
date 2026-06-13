@@ -366,6 +366,10 @@ const AttendancePanel = () => {
     return target >= today;
   };
 
+  const openLeaveModal = (date = "") => {
+    setLeaveModal({ open: true, date });
+  };
+
   if (status.loading) {
     return (
       <div className="employee-panel attendance-panel">
@@ -455,9 +459,19 @@ const AttendancePanel = () => {
     <div className="employee-panel attendance-panel">
       <div className="panel-header">
         <h3>Attendance</h3>
-        <span className={`panel-badge attendance-badge ${todayStatus.tone}`}>
-          {todayStatus.label}
-        </span>
+        <div className="attendance-header-actions">
+          <button
+            type="button"
+            className="attendance-apply-header-btn"
+            onClick={() => openLeaveModal()}
+          >
+            <CalendarPlus size={15} />
+            Apply Leave / WFH
+          </button>
+          <span className={`panel-badge attendance-badge ${todayStatus.tone}`}>
+            {todayStatus.label}
+          </span>
+        </div>
       </div>
 
       <div className={`attendance-live-card ${todayStatus.tone}`}>
@@ -577,14 +591,31 @@ const AttendancePanel = () => {
           {calendarCells.map((cell) =>
             cell.empty ? (
               <div key={cell.key} className="attendance-calendar-cell placeholder"></div>
-            ) : (
+            ) : (() => {
+              const canOpenLeaveModal = canApplyLeaveForDate(cell);
+              return (
               <div
                 key={cell.date}
                 className={`attendance-calendar-cell ${cell.meta.tone} ${
                   hoveredDay?.date === cell.date ? "hovered" : ""
-                } ${cell.beforeJoiningDate || cell.futureDate ? "disabled" : ""}`}
+                } ${cell.beforeJoiningDate || cell.futureDate ? "disabled" : ""} ${
+                  canOpenLeaveModal ? "selectable" : ""
+                }`}
                 onMouseEnter={() => setHoveredDay(cell)}
                 onMouseLeave={() => setHoveredDay(null)}
+                onClick={() => {
+                  if (canOpenLeaveModal) {
+                    openLeaveModal(cell.date);
+                  }
+                }}
+                role={canOpenLeaveModal ? "button" : undefined}
+                tabIndex={canOpenLeaveModal ? 0 : undefined}
+                onKeyDown={(event) => {
+                  if (canOpenLeaveModal && (event.key === "Enter" || event.key === " ")) {
+                    event.preventDefault();
+                    openLeaveModal(cell.date);
+                  }
+                }}
               >
                 <span className="attendance-calendar-day-number">{cell.dayNumber}</span>
                 {!cell.beforeJoiningDate && !cell.futureDate && !cell.holiday && cell.workedMinutes > 0 && (
@@ -606,23 +637,11 @@ const AttendancePanel = () => {
                         </small>
                       </>
                     )}
-                    {canApplyLeaveForDate(cell) && (
-                      <button
-                        type="button"
-                        className="attendance-apply-leave-btn"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setLeaveModal({ open: true, date: cell.date });
-                        }}
-                      >
-                        <CalendarPlus size={14} />
-                        Apply Leave / WFH
-                      </button>
-                    )}
                   </div>
                 )}
               </div>
-            )
+              );
+            })()
           )}
         </div>
 
