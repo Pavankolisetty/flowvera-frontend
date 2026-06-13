@@ -2,10 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   AlarmClock,
+  CalendarCheck,
   CalendarDays,
   CalendarPlus,
   ChevronLeft,
   ChevronRight,
+  Home,
   LogIn,
   LogOut,
   Timer,
@@ -128,6 +130,14 @@ const normalizeStatus = (status, holidayName) => {
         label: holidayName === "Weekly off" ? "Weekly off" : "National holiday",
         tone: holidayName === "Weekly off" ? "weekly-off" : "holiday",
       };
+    case "LEAVE":
+      return { label: "Approved leave", tone: "leave" };
+    case "LEAVE_WORKED":
+      return { label: "Leave - worked", tone: "leave-worked" };
+    case "WFH":
+      return { label: "Work from home", tone: "wfh" };
+    case "WFH_NO_LOGIN":
+      return { label: "WFH - no login", tone: "wfh-missed" };
     case "UPCOMING":
       return { label: "Upcoming", tone: "upcoming" };
     case "NOT_JOINED":
@@ -354,6 +364,9 @@ const AttendancePanel = () => {
     { tone: "absent", label: "Absent" },
     { tone: "weekly-off", label: "Weekly off" },
     { tone: "holiday", label: "National holiday" },
+    { tone: "leave", label: "Leave" },
+    { tone: "wfh", label: "WFH" },
+    { tone: "wfh-missed", label: "WFH no login" },
   ];
 
   const canApplyLeaveForDate = (cell) => {
@@ -621,12 +634,25 @@ const AttendancePanel = () => {
                 {!cell.beforeJoiningDate && !cell.futureDate && !cell.holiday && cell.workedMinutes > 0 && (
                   <small className="attendance-calendar-hours">{formatMinutes(cell.workedMinutes)}</small>
                 )}
-                {cell.holiday && <small className="attendance-calendar-marker">Holiday</small>}
+                {cell.leaveOrWfhApproved ? (
+                  <small className={`attendance-calendar-marker leave-marker ${String(cell.leaveRequestType).toLowerCase()}`}>
+                    {cell.leaveRequestType === "WFH" ? <Home size={11} /> : <CalendarCheck size={11} />}
+                    {cell.leaveRequestType === "WFH" ? "WFH" : "Leave"}
+                  </small>
+                ) : cell.holiday && (
+                  <small className="attendance-calendar-marker">Holiday</small>
+                )}
 
                 {hoveredDay?.date === cell.date && (
                   <div className="attendance-calendar-tooltip">
                     <strong>{cell.meta.label}</strong>
-                    <span>{cell.holidayName || formatMinutes(cell.workedMinutes)}</span>
+                    <span>{cell.leaveLabel || cell.holidayName || formatMinutes(cell.workedMinutes)}</span>
+                    {cell.leaveOrWfhApproved && (
+                      <small>
+                        {cell.leaveRequestType === "WFH" ? "WFH" : "Leave"}:{" "}
+                        {String(cell.leaveDayPart || "FULL_DAY").replaceAll("_", " ").toLowerCase()}
+                      </small>
+                    )}
                     {!cell.beforeJoiningDate && !cell.futureDate && (
                       <>
                         <small>Worked: {formatMinutes(cell.workedMinutes)}</small>

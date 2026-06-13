@@ -1283,6 +1283,18 @@
   background: rgba(99, 102, 241, 0.16);
 }
 
+.attendance-legend-swatch.leave {
+  background: rgba(244, 114, 182, 0.18);
+}
+
+.attendance-legend-swatch.wfh {
+  background: rgba(20, 184, 166, 0.18);
+}
+
+.attendance-legend-swatch.wfh-missed {
+  background: rgba(124, 58, 237, 0.16);
+}
+
 .attendance-calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -1365,6 +1377,34 @@
   background: rgba(99, 102, 241, 0.14);
 }
 
+.attendance-calendar-cell.leave,
+.attendance-calendar-cell.leave-worked {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.76), rgba(253, 242, 248, 0.8)),
+    rgba(244, 114, 182, 0.2);
+  box-shadow:
+    inset 0 0 0 1px rgba(219, 39, 119, 0.18),
+    0 10px 22px rgba(219, 39, 119, 0.08);
+}
+
+.attendance-calendar-cell.wfh {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.76), rgba(240, 253, 250, 0.84)),
+    rgba(20, 184, 166, 0.2);
+  box-shadow:
+    inset 0 0 0 1px rgba(13, 148, 136, 0.2),
+    0 10px 22px rgba(13, 148, 136, 0.08);
+}
+
+.attendance-calendar-cell.wfh-missed {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.76), rgba(245, 243, 255, 0.86)),
+    rgba(124, 58, 237, 0.16);
+  box-shadow:
+    inset 0 0 0 1px rgba(109, 40, 217, 0.18),
+    0 10px 22px rgba(109, 40, 217, 0.07);
+}
+
 .attendance-calendar-cell.live {
   background: rgba(20, 184, 166, 0.18);
 }
@@ -1389,6 +1429,27 @@
 .attendance-calendar-marker {
   font-weight: 700;
   color: #1d4ed8;
+}
+
+.attendance-calendar-marker.leave-marker {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 3px 6px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.attendance-calendar-marker.leave-marker.leave {
+  color: #be185d;
+}
+
+.attendance-calendar-marker.leave-marker.wfh {
+  color: #0f766e;
 }
 
 .attendance-calendar-tooltip {
@@ -2037,6 +2098,16 @@
   color: #64748b;
   font-size: 12px;
   font-weight: 700;
+}
+
+.leave-balance-card-header span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.leave-balance-card-header span svg {
+  color: #2563eb;
 }
 
 .leave-balance-card strong {
