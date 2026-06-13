@@ -35,6 +35,16 @@ const startOfWeek = () => {
   return today;
 };
 
+const currentWeekKey = () => toDateKey(startOfWeek());
+
+const isCurrentWeekDate = (value) => {
+  if (!value) return false;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return false;
+  date.setHours(0, 0, 0, 0);
+  return date >= startOfWeek();
+};
+
 const getCompletedAt = (assignment) => {
   if (assignment?.status !== "COMPLETED") return null;
   const acceptedHistory = [...(assignment.progressHistory || [])]
@@ -87,15 +97,26 @@ const buildDashboardNotifications = (assignedTasks = [], delegatedTasks = [], le
   const notifications = [];
 
   leaveRequests.forEach((request) => {
-    if (!request.employeeNotificationUnread || !request.employeeNotificationMessage) {
+    const isFreshLeaveNotification =
+      request.employeeNotificationUnread ||
+      isCurrentWeekDate(request.createdAt) ||
+      isCurrentWeekDate(request.decidedAt);
+
+    if (!isFreshLeaveNotification) {
       return;
     }
 
+    const isPending = request.status === "PENDING";
+    const isApproved = request.status === "APPROVED";
     notifications.push({
       id: `leave-${request.id}`,
-      type: request.status === "APPROVED" ? "success" : "overdue",
+      type: isPending ? "approval" : isApproved ? "success" : "overdue",
       title: `${request.requestType} ${request.status}`,
-      message: request.employeeNotificationMessage,
+      message:
+        request.employeeNotificationMessage ||
+        (isPending
+          ? `Your ${request.requestType} request is waiting for approval.`
+          : `Your ${request.requestType} request was ${String(request.status).toLowerCase()}.`),
       to: "/employee/dashboard",
     });
   });
@@ -157,7 +178,7 @@ const buildDashboardNotifications = (assignedTasks = [], delegatedTasks = [], le
 };
 
 const notificationSeenKey = (user) =>
-  `employee-dashboard-notifications-seen:${user?.empId || user?.email || user?.name || "current"}`;
+  `employee-dashboard-notifications-seen:${currentWeekKey()}:${user?.empId || user?.email || user?.name || "current"}`;
 
 export default function EmployeeDashboard() {
   const { authFetch, user } = useAuth();
@@ -180,6 +201,10 @@ export default function EmployeeDashboard() {
     hasDelegated: false,
   });
   const [status, setStatus] = useState({ loading: true, error: "" });
+
+  const markLeaveNotificationsRead = () => {
+    authFetch("/api/employee/leave/notifications/read", { method: "PUT" }).catch(() => {});
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -248,6 +273,7 @@ export default function EmployeeDashboard() {
             setNotificationsOpen(true);
             setNotificationsSeen(true);
             window.sessionStorage.setItem(seenKey, "true");
+            markLeaveNotificationsRead();
           } else {
             setNotificationsOpen(false);
           }
@@ -264,9 +290,6 @@ export default function EmployeeDashboard() {
               (task) => task.adminNotificationUnread && task.adminNotificationMessage
             ),
           });
-          if ((leaveRequestsData || []).some((request) => request.employeeNotificationUnread)) {
-            authFetch("/api/employee/leave/notifications/read", { method: "PUT" }).catch(() => {});
-          }
           setStatus({ loading: false, error: "" });
         }
       } catch (error) {
@@ -297,11 +320,13 @@ export default function EmployeeDashboard() {
             setNotificationsOpen(true);
             setNotificationsSeen(true);
             window.sessionStorage.setItem(notificationSeenKey(user), "true");
+            markLeaveNotificationsRead();
           }}
           onCloseNotifications={() => {
             setNotificationsOpen(false);
             setNotificationsSeen(true);
             window.sessionStorage.setItem(notificationSeenKey(user), "true");
+            markLeaveNotificationsRead();
           }}
         />
 
