@@ -2791,10 +2791,10 @@
 
 .department-brand-watermark {
   position: absolute;
-  right: -8px;
-  bottom: -8px;
+  right: -10px;
+  bottom: -10px;
   color: var(--department-color, #475569);
-  opacity: 0.16;
+  opacity: 0.11;
   transform: rotate(-12deg);
   pointer-events: none;
 }
@@ -2805,20 +2805,22 @@
   right: 8px;
   display: inline-flex;
   color: color-mix(in srgb, var(--department-color, #475569) 88%, #0f172a);
+  opacity: 0.82;
 }
 
 .department-brand-initials {
-  color: #0f172a;
-  font-size: 15px;
-  font-weight: 900;
+  color: color-mix(in srgb, var(--department-color, #475569) 42%, #0f172a);
+  font-size: 16px;
+  font-weight: 800;
   line-height: 1;
   letter-spacing: 0;
-  transform: translateY(1px);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
 .department-brand-badge.profile .department-brand-initials,
 .department-brand-badge.card .department-brand-initials {
-  font-size: 19px;
+  font-size: 21px;
+  font-weight: 800;
 }
 
 .department-brand-code {

@@ -28,6 +28,7 @@ export default function DepartmentBrandBadge({
   departmentIcon,
   size = "md",
   variant = "compact",
+  showDepartmentCode = false,
 }) {
   const Icon =
     typeof departmentIcon === "function"
@@ -47,7 +48,7 @@ export default function DepartmentBrandBadge({
         <Icon size={variant === "profile" ? 22 : 16} strokeWidth={2.35} />
       </span>
       <span className="department-brand-initials">{getEmployeeInitials(employeeName)}</span>
-      <span className="department-brand-code">{departmentCode || "TM"}</span>
+      {showDepartmentCode && <span className="department-brand-code">{departmentCode || "TM"}</span>}
     </span>
   );
 }
