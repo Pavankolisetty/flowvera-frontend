@@ -2743,6 +2743,100 @@
   height: 64px;
 }
 
+.department-brand-badge {
+  position: relative;
+  isolation: isolate;
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--department-color, #475569) 34%, #ffffff);
+  background:
+    radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.34) 36%, transparent 58%),
+    linear-gradient(145deg,
+      color-mix(in srgb, var(--department-color, #475569) 10%, #ffffff),
+      color-mix(in srgb, var(--department-color, #475569) 24%, #ffffff));
+  color: var(--department-color, #475569);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78), 0 14px 30px rgba(15, 23, 42, 0.13);
+}
+
+.department-brand-badge.compact {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+}
+
+.department-brand-badge.profile {
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+}
+
+.department-brand-badge.card {
+  width: 68px;
+  height: 68px;
+  border-radius: 20px;
+}
+
+.department-brand-badge.sm {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+}
+
+.department-brand-badge.lg.profile {
+  width: 78px;
+  height: 78px;
+}
+
+.department-brand-watermark {
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  color: var(--department-color, #475569);
+  opacity: 0.16;
+  transform: rotate(-12deg);
+  pointer-events: none;
+}
+
+.department-brand-icon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  color: color-mix(in srgb, var(--department-color, #475569) 88%, #0f172a);
+}
+
+.department-brand-initials {
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0;
+  transform: translateY(1px);
+}
+
+.department-brand-badge.profile .department-brand-initials,
+.department-brand-badge.card .department-brand-initials {
+  font-size: 19px;
+}
+
+.department-brand-code {
+  position: absolute;
+  left: 8px;
+  bottom: 7px;
+  min-width: 24px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  color: color-mix(in srgb, var(--department-color, #475569) 88%, #0f172a);
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1.1;
+  text-align: center;
+}
+
 .account-trigger-copy {
   display: flex;
   flex-direction: column;

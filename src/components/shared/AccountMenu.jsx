@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, PencilLine, ShieldCheck, UsersRound } from "lucide-react";
-import DepartmentEmblem from "./DepartmentEmblem";
+import { getDepartmentBrand } from "../../utils/departmentBranding";
+import DepartmentBrandBadge from "./DepartmentBrandBadge";
 
 export default function AccountMenu({
   user,
@@ -27,6 +28,7 @@ export default function AccountMenu({
   const fallbackDesignation = user?.role === "ADMIN" ? "Administrator" : "Associate Engineer";
   const designation = String(user?.designation || "").trim() || fallbackDesignation;
   const departmentLabel = user?.role === "ADMIN" ? "Admin Console" : user?.department || "Team";
+  const departmentBrand = getDepartmentBrand(user?.department);
 
   return (
     <div className="account-menu" ref={containerRef}>
@@ -36,7 +38,15 @@ export default function AccountMenu({
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
       >
-        <DepartmentEmblem department={user?.department} name={user?.name} size="md" className="account-avatar" />
+        <DepartmentBrandBadge
+          employeeName={user?.name}
+          departmentName={user?.department}
+          departmentCode={departmentBrand.shortName}
+          departmentColor={departmentBrand.color}
+          departmentIcon={departmentBrand.icon}
+          size="md"
+          variant="compact"
+        />
         <span className="account-trigger-copy">
           <strong>{user?.name || "Account"}</strong>
           <small>{departmentLabel} · {designation}</small>
