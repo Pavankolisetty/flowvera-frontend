@@ -3,6 +3,7 @@ import {
   Activity,
   AlarmClock,
   CalendarDays,
+  CalendarPlus,
   ChevronLeft,
   ChevronRight,
   LogIn,
@@ -11,6 +12,7 @@ import {
 } from "lucide-react";
 import { buildApiUrl } from "../../config/api";
 import { useAuth } from "../../context/AuthContext";
+import LeaveWfhApplicationModal from "./LeaveWfhApplicationModal";
 
 const ATTENDANCE_SESSION_KEY = "flowvera_attendance_session";
 const HEARTBEAT_INTERVAL_MS = 45000;
@@ -142,6 +144,7 @@ const AttendancePanel = () => {
   const [status, setStatus] = useState({ loading: true, saving: false, error: "" });
   const [selectedMonth, setSelectedMonth] = useState(monthKeyFromDate());
   const [hoveredDay, setHoveredDay] = useState(null);
+  const [leaveModal, setLeaveModal] = useState({ open: false, date: "" });
   const intervalRef = useRef(null);
   const sessionKey = useMemo(() => readSessionKey(), []);
 
@@ -352,6 +355,16 @@ const AttendancePanel = () => {
     { tone: "weekly-off", label: "Weekly off" },
     { tone: "holiday", label: "National holiday" },
   ];
+
+  const canApplyLeaveForDate = (cell) => {
+    if (!cell?.date || cell.beforeJoiningDate) {
+      return false;
+    }
+    const target = new Date(`${cell.date}T00:00:00`);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return target >= today;
+  };
 
   if (status.loading) {
     return (
@@ -593,6 +606,19 @@ const AttendancePanel = () => {
                         </small>
                       </>
                     )}
+                    {canApplyLeaveForDate(cell) && (
+                      <button
+                        type="button"
+                        className="attendance-apply-leave-btn"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setLeaveModal({ open: true, date: cell.date });
+                        }}
+                      >
+                        <CalendarPlus size={14} />
+                        Apply Leave / WFH
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -605,6 +631,13 @@ const AttendancePanel = () => {
           configured Google Calendar feed when available.
         </div>
       </div>
+
+      <LeaveWfhApplicationModal
+        open={leaveModal.open}
+        initialDate={leaveModal.date}
+        onClose={() => setLeaveModal({ open: false, date: "" })}
+        onSubmitted={() => loadOverview(selectedMonth)}
+      />
     </div>
   );
 };

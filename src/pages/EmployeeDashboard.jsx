@@ -82,9 +82,23 @@ const buildTodaySummary = (assignments = []) => {
 
 const taskTitle = (assignment) => assignment?.task?.title || "Task";
 
-const buildDashboardNotifications = (assignedTasks = [], delegatedTasks = []) => {
+const buildDashboardNotifications = (assignedTasks = [], delegatedTasks = [], leaveRequests = []) => {
   const todayKey = toDateKey(new Date());
   const notifications = [];
+
+  leaveRequests.forEach((request) => {
+    if (!request.employeeNotificationUnread || !request.employeeNotificationMessage) {
+      return;
+    }
+
+    notifications.push({
+      id: `leave-${request.id}`,
+      type: request.status === "APPROVED" ? "success" : "overdue",
+      title: `${request.requestType} ${request.status}`,
+      message: request.employeeNotificationMessage,
+      to: "/employee/dashboard",
+    });
+  });
 
   delegatedTasks.forEach((assignment) => {
     if (!assignment.adminNotificationUnread || !assignment.adminNotificationMessage) {
@@ -172,11 +186,18 @@ export default function EmployeeDashboard() {
 
     const loadDashboard = async () => {
       try {
-        const [profileResponse, tasksResponse, allTasksResponse, delegatedTasksResponse] = await Promise.all([
+        const [
+          profileResponse,
+          tasksResponse,
+          allTasksResponse,
+          delegatedTasksResponse,
+          leaveRequestsResponse,
+        ] = await Promise.all([
           authFetch("/api/employee/me"),
           authFetch("/api/employee/my-tasks/active"),
           authFetch("/api/employee/my-tasks"),
           authFetch("/api/employee/delegated-tasks"),
+          authFetch("/api/employee/leave/requests"),
         ]);
 
         if (!profileResponse.ok) {
@@ -199,10 +220,16 @@ export default function EmployeeDashboard() {
           throw new Error(message || "Failed to load delegated task notifications");
         }
 
+        if (!leaveRequestsResponse.ok) {
+          const message = await leaveRequestsResponse.text();
+          throw new Error(message || "Failed to load leave notifications");
+        }
+
         const profileData = await profileResponse.json();
         const tasksData = await tasksResponse.json();
         const allTasksData = await allTasksResponse.json();
         const delegatedTasksData = await delegatedTasksResponse.json();
+        const leaveRequestsData = await leaveRequestsResponse.json();
 
         if (isMounted) {
           setProfileName(profileData.name || user?.name || "");
@@ -210,7 +237,8 @@ export default function EmployeeDashboard() {
           setTodaySummary(buildTodaySummary(allTasksData || []));
           const notificationItems = buildDashboardNotifications(
             allTasksData || [],
-            delegatedTasksData || []
+            delegatedTasksData || [],
+            leaveRequestsData || []
           );
           const seenKey = notificationSeenKey(user);
           const alreadySeen = window.sessionStorage.getItem(seenKey) === "true";
@@ -236,6 +264,9 @@ export default function EmployeeDashboard() {
               (task) => task.adminNotificationUnread && task.adminNotificationMessage
             ),
           });
+          if ((leaveRequestsData || []).some((request) => request.employeeNotificationUnread)) {
+            authFetch("/api/employee/leave/notifications/read", { method: "PUT" }).catch(() => {});
+          }
           setStatus({ loading: false, error: "" });
         }
       } catch (error) {
