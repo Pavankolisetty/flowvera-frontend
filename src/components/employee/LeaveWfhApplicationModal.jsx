@@ -75,6 +75,18 @@ export default function LeaveWfhApplicationModal({ open, initialDate, onClose, o
     return Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
   }, [form.dayPart, form.endDate, form.startDate]);
 
+  const selectedQuota = form.requestType === "WFH"
+    ? {
+        label: "WFH",
+        available: balance?.wfhAvailable,
+        monthlyLimit: balance?.wfhMonthlyLimit,
+      }
+    : {
+        label: "Leave",
+        available: balance?.leaveAvailable ?? balance?.available,
+        monthlyLimit: balance?.leaveMonthlyLimit,
+      };
+
   const toggleDependency = (empId) => {
     setForm((current) => {
       const selected = new Set(current.dependencyEmpIds);
@@ -145,14 +157,34 @@ export default function LeaveWfhApplicationModal({ open, initialDate, onClose, o
           <>
             <div className="leave-balance-grid">
               {[
-                ["Allocated", balance?.allocated],
-                ["Used", balance?.used],
-                ["Pending", balance?.pending],
-                ["Available", balance?.available],
-              ].map(([label, value]) => (
-                <div className="leave-balance-card" key={label}>
-                  <span>{label}</span>
-                  <strong>{formatNumber(value)}</strong>
+                {
+                  title: "Leave",
+                  allocated: balance?.leaveAllocated ?? balance?.allocated,
+                  monthly: balance?.leaveMonthlyLimit,
+                  used: balance?.leaveUsed ?? balance?.used,
+                  pending: balance?.leavePending ?? balance?.pending,
+                  available: balance?.leaveAvailable ?? balance?.available,
+                },
+                {
+                  title: "WFH",
+                  allocated: balance?.wfhAllocated,
+                  monthly: balance?.wfhMonthlyLimit,
+                  used: balance?.wfhUsed,
+                  pending: balance?.wfhPending,
+                  available: balance?.wfhAvailable,
+                },
+              ].map((quota) => (
+                <div className="leave-balance-card" key={quota.title}>
+                  <div className="leave-balance-card-header">
+                    <span>{quota.title} Balance</span>
+                    <small>{formatNumber(quota.monthly)} / month</small>
+                  </div>
+                  <strong>{formatNumber(quota.available)}</strong>
+                  <div className="leave-balance-meta">
+                    <span>{formatNumber(quota.allocated)} yearly</span>
+                    <span>{formatNumber(quota.used)} used</span>
+                    <span>{formatNumber(quota.pending)} pending</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -267,7 +299,10 @@ export default function LeaveWfhApplicationModal({ open, initialDate, onClose, o
                 <div>
                   <span>Estimated total</span>
                   <strong>{formatNumber(estimatedDays)} day{estimatedDays === 1 ? "" : "s"}</strong>
-                  {form.requestType === "WFH" && <small>WFH does not reduce leave balance</small>}
+                  <small>
+                    {selectedQuota.label} available: {formatNumber(selectedQuota.available)} yearly,
+                    {" "}monthly limit: {formatNumber(selectedQuota.monthlyLimit)}
+                  </small>
                 </div>
                 <button type="submit" className="leave-submit-btn" disabled={status.submitting}>
                   {status.submitting ? "Submitting..." : "Submit Request"}

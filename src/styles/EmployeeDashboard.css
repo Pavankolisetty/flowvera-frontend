@@ -2003,7 +2003,7 @@
 
 .leave-balance-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   padding: 18px 24px 0;
 }
@@ -2014,6 +2014,20 @@
   border: 1px solid rgba(15, 23, 42, 0.08);
   background: linear-gradient(145deg, #ffffff, #f8fafc);
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.leave-balance-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.leave-balance-card-header small {
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .leave-balance-card span,
@@ -2030,6 +2044,22 @@
   margin-top: 6px;
   color: #0f172a;
   font-size: 24px;
+}
+
+.leave-balance-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.leave-balance-meta span {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: rgba(15, 23, 42, 0.05);
+  color: #475569;
+  font-size: 11px;
 }
 
 .leave-modal-content .employee-error,
