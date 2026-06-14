@@ -635,7 +635,7 @@ const AttendancePanel = () => {
                     className={`attendance-calendar-marker leave-marker ${String(cell.leaveRequestType).toLowerCase()}`}
                     title={cell.leaveRequestType === "WFH" ? "WFH approved" : "Leave approved"}
                   >
-                    {cell.leaveRequestType === "WFH" ? <WfhIcon size={13} /> : <LeaveIcon size={13} />}
+                    {cell.leaveRequestType === "WFH" ? <WfhIcon size={22} /> : <LeaveIcon size={22} />}
                   </small>
                 ) : cell.holiday && (
                   <small className="attendance-calendar-marker">Holiday</small>

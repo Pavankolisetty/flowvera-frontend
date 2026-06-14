@@ -180,7 +180,9 @@ export default function LeaveWfhApplicationModal({ open, initialDate, onClose, o
                 <div className="leave-balance-card" key={quota.title}>
                   <div className="leave-balance-card-header">
                     <span>
-                      <quota.icon size={15} />
+                      <span className="leave-balance-icon">
+                        <quota.icon size={20} />
+                      </span>
                       {quota.title} Balance
                     </span>
                     <small>{formatNumber(quota.monthly)} / month</small>
