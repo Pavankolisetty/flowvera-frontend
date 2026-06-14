@@ -1264,35 +1264,23 @@
 }
 
 .attendance-legend-swatch.present {
-  background: rgba(34, 197, 94, 0.2);
+  background: rgba(34, 197, 94, 0.28);
 }
 
 .attendance-legend-swatch.partial {
-  background: rgba(245, 158, 11, 0.22);
+  background: rgba(245, 158, 11, 0.3);
 }
 
 .attendance-legend-swatch.absent {
-  background: rgba(239, 68, 68, 0.18);
+  background: rgba(239, 68, 68, 0.26);
 }
 
 .attendance-legend-swatch.holiday {
-  background: rgba(59, 130, 246, 0.18);
+  background: rgba(59, 130, 246, 0.26);
 }
 
 .attendance-legend-swatch.weekly-off {
-  background: rgba(99, 102, 241, 0.16);
-}
-
-.attendance-legend-swatch.leave {
-  background: rgba(244, 114, 182, 0.18);
-}
-
-.attendance-legend-swatch.wfh {
-  background: rgba(20, 184, 166, 0.18);
-}
-
-.attendance-legend-swatch.wfh-missed {
-  background: rgba(124, 58, 237, 0.16);
+  background: rgba(99, 102, 241, 0.24);
 }
 
 .attendance-calendar-grid {
@@ -1358,60 +1346,32 @@
 }
 
 .attendance-calendar-cell.present {
-  background: rgba(34, 197, 94, 0.14);
+  background: rgba(34, 197, 94, 0.23);
 }
 
 .attendance-calendar-cell.partial {
-  background: rgba(245, 158, 11, 0.16);
+  background: rgba(245, 158, 11, 0.25);
 }
 
 .attendance-calendar-cell.absent {
-  background: rgba(239, 68, 68, 0.14);
+  background: rgba(239, 68, 68, 0.22);
 }
 
 .attendance-calendar-cell.holiday {
-  background: rgba(59, 130, 246, 0.14);
+  background: rgba(59, 130, 246, 0.22);
 }
 
 .attendance-calendar-cell.weekly-off {
-  background: rgba(99, 102, 241, 0.14);
-}
-
-.attendance-calendar-cell.leave,
-.attendance-calendar-cell.leave-worked {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.76), rgba(253, 242, 248, 0.8)),
-    rgba(244, 114, 182, 0.2);
-  box-shadow:
-    inset 0 0 0 1px rgba(219, 39, 119, 0.18),
-    0 10px 22px rgba(219, 39, 119, 0.08);
-}
-
-.attendance-calendar-cell.wfh {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.76), rgba(240, 253, 250, 0.84)),
-    rgba(20, 184, 166, 0.2);
-  box-shadow:
-    inset 0 0 0 1px rgba(13, 148, 136, 0.2),
-    0 10px 22px rgba(13, 148, 136, 0.08);
-}
-
-.attendance-calendar-cell.wfh-missed {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.76), rgba(245, 243, 255, 0.86)),
-    rgba(124, 58, 237, 0.16);
-  box-shadow:
-    inset 0 0 0 1px rgba(109, 40, 217, 0.18),
-    0 10px 22px rgba(109, 40, 217, 0.07);
+  background: rgba(99, 102, 241, 0.22);
 }
 
 .attendance-calendar-cell.live {
-  background: rgba(20, 184, 166, 0.18);
+  background: rgba(20, 184, 166, 0.25);
 }
 
 .attendance-calendar-cell.upcoming,
 .attendance-calendar-cell.muted {
-  background: rgba(148, 163, 184, 0.12);
+  background: rgba(148, 163, 184, 0.16);
 }
 
 .attendance-calendar-day-number {
@@ -1432,24 +1392,28 @@
 }
 
 .attendance-calendar-marker.leave-marker {
-  width: fit-content;
+  width: 22px;
+  height: 22px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   border-radius: 999px;
-  padding: 3px 6px;
-  background: rgba(255, 255, 255, 0.72);
-  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
+  padding: 0;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 6px 14px rgba(15, 23, 42, 0.08),
+    inset 0 0 0 1px rgba(15, 23, 42, 0.08);
   font-size: 10px;
   line-height: 1;
 }
 
 .attendance-calendar-marker.leave-marker.leave {
-  color: #be185d;
+  color: #374151;
 }
 
 .attendance-calendar-marker.leave-marker.wfh {
-  color: #0f766e;
+  color: #111827;
 }
 
 .attendance-calendar-tooltip {

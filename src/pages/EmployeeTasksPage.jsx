@@ -983,11 +983,13 @@ export default function EmployeeTasksPage() {
               required
             >
               <option value="">Choose an employee...</option>
-              {assignableEmployees.map((employee) => (
-                <option key={employee.empId} value={employee.empId}>
-                  {employee.name} ({employee.empId})
-                </option>
-              ))}
+                            {assignableEmployees
+                              .filter((employee) => isDepartmentLead || !employee.departmentLead)
+                .map((employee) => (
+                  <option key={employee.empId} value={employee.empId}>
+                    {employee.name} ({employee.empId})
+                  </option>
+                ))}
             </select>
           </div>
 

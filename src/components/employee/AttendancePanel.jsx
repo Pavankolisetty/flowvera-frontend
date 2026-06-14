@@ -2,12 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   AlarmClock,
-  CalendarCheck,
   CalendarDays,
   CalendarPlus,
   ChevronLeft,
   ChevronRight,
-  Home,
   LogIn,
   LogOut,
   Timer,
@@ -15,6 +13,7 @@ import {
 import { buildApiUrl } from "../../config/api";
 import { useAuth } from "../../context/AuthContext";
 import LeaveWfhApplicationModal from "./LeaveWfhApplicationModal";
+import { LeaveIcon, WfhIcon } from "./LeaveWfhIcons";
 
 const ATTENDANCE_SESSION_KEY = "flowvera_attendance_session";
 const HEARTBEAT_INTERVAL_MS = 45000;
@@ -131,13 +130,13 @@ const normalizeStatus = (status, holidayName) => {
         tone: holidayName === "Weekly off" ? "weekly-off" : "holiday",
       };
     case "LEAVE":
-      return { label: "Approved leave", tone: "leave" };
+      return { label: "Approved leave", tone: "muted" };
     case "LEAVE_WORKED":
-      return { label: "Leave - worked", tone: "leave-worked" };
+      return { label: "Leave - worked", tone: "partial" };
     case "WFH":
-      return { label: "Work from home", tone: "wfh" };
+      return { label: "Work from home", tone: "present" };
     case "WFH_NO_LOGIN":
-      return { label: "WFH - no login", tone: "wfh-missed" };
+      return { label: "WFH - no login", tone: "muted" };
     case "UPCOMING":
       return { label: "Upcoming", tone: "upcoming" };
     case "NOT_JOINED":
@@ -364,9 +363,6 @@ const AttendancePanel = () => {
     { tone: "absent", label: "Absent" },
     { tone: "weekly-off", label: "Weekly off" },
     { tone: "holiday", label: "National holiday" },
-    { tone: "leave", label: "Leave" },
-    { tone: "wfh", label: "WFH" },
-    { tone: "wfh-missed", label: "WFH no login" },
   ];
 
   const canApplyLeaveForDate = (cell) => {
@@ -635,9 +631,11 @@ const AttendancePanel = () => {
                   <small className="attendance-calendar-hours">{formatMinutes(cell.workedMinutes)}</small>
                 )}
                 {cell.leaveOrWfhApproved ? (
-                  <small className={`attendance-calendar-marker leave-marker ${String(cell.leaveRequestType).toLowerCase()}`}>
-                    {cell.leaveRequestType === "WFH" ? <Home size={11} /> : <CalendarCheck size={11} />}
-                    {cell.leaveRequestType === "WFH" ? "WFH" : "Leave"}
+                  <small
+                    className={`attendance-calendar-marker leave-marker ${String(cell.leaveRequestType).toLowerCase()}`}
+                    title={cell.leaveRequestType === "WFH" ? "WFH approved" : "Leave approved"}
+                  >
+                    {cell.leaveRequestType === "WFH" ? <WfhIcon size={13} /> : <LeaveIcon size={13} />}
                   </small>
                 ) : cell.holiday && (
                   <small className="attendance-calendar-marker">Holiday</small>

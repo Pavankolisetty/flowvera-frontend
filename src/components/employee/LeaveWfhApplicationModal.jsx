@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarCheck, CalendarDays, CheckCircle, Home, Loader2, X } from "lucide-react";
+import { CheckCircle, Loader2, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { LeaveIcon, WfhIcon } from "./LeaveWfhIcons";
 
 const initialForm = {
   requestType: "LEAVE",
@@ -159,7 +160,7 @@ export default function LeaveWfhApplicationModal({ open, initialDate, onClose, o
               {[
                 {
                   title: "Leave",
-                  icon: CalendarCheck,
+                  icon: LeaveIcon,
                   allocated: balance?.leaveAllocated ?? balance?.allocated,
                   monthly: balance?.leaveMonthlyLimit,
                   used: balance?.leaveUsed ?? balance?.used,
@@ -168,7 +169,7 @@ export default function LeaveWfhApplicationModal({ open, initialDate, onClose, o
                 },
                 {
                   title: "WFH",
-                  icon: Home,
+                  icon: WfhIcon,
                   allocated: balance?.wfhAllocated,
                   monthly: balance?.wfhMonthlyLimit,
                   used: balance?.wfhUsed,
@@ -321,7 +322,7 @@ export default function LeaveWfhApplicationModal({ open, initialDate, onClose, o
               </div>
               {requests.slice(0, 4).map((request) => (
                 <div key={request.id} className={`leave-history-item ${String(request.status).toLowerCase()}`}>
-                  {request.requestType === "WFH" ? <Home size={16} /> : <CalendarCheck size={16} />}
+                  {request.requestType === "WFH" ? <WfhIcon size={16} /> : <LeaveIcon size={16} />}
                   <div>
                     <strong>{request.requestType} · {request.status}</strong>
                     <span>{request.startDate} to {request.endDate} · {formatNumber(request.totalDays)} day(s)</span>
