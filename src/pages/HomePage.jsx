@@ -10,9 +10,6 @@ import AboutSection from "../components/AboutSection"
 const HomePage = () => {
   return (
     <div className="homepage">
-      <div className="beta-badge">
-        <span className="beta-text">BETA</span>
-      </div>
       <HeroSection />
       <AboutSection/>
       <FeaturesSection />

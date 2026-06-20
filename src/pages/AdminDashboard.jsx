@@ -5,7 +5,7 @@ import AdminAnalytics from "../components/admin/AdminAnalytics";
 import AdminDocs from "../components/admin/AdminDocs";
 import AdminEmployeeInsights from "../components/admin/AdminEmployeeInsights";
 import AdminTaskManagement from "../components/admin/AdminTaskManagement";
-import FeedbackForm from "../components/shared/FeedbackForm";
+import CommunicationWidget from "../components/shared/CommunicationWidget";
 import AccountMenu from "../components/shared/AccountMenu";
 import "../styles/AdminDashboard.css";
 
@@ -227,7 +227,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <FeedbackForm userType="admin" />
+      <CommunicationWidget />
 
       {notification && (
         <div

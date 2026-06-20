@@ -4,7 +4,7 @@ import TaskList from "../components/employee/TaskList";
 import AttendancePanel from "../components/employee/AttendancePanel";
 import QuoteSection from "../components/employee/QuoteSection";
 import TodaySummaryStrip from "../components/employee/TodaySummaryStrip";
-import FeedbackForm from "../components/shared/FeedbackForm";
+import CommunicationWidget from "../components/shared/CommunicationWidget";
 import { useAuth } from "../context/AuthContext";
 import "../styles/EmployeeDashboard.css";
 
@@ -338,7 +338,7 @@ export default function EmployeeDashboard() {
         </section>
       </div>
 
-      <FeedbackForm userType="employee" />
+      <CommunicationWidget />
     </div>
   );
 }
