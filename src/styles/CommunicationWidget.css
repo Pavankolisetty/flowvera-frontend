@@ -41,7 +41,7 @@
 .communication-panel {
   position: absolute;
   right: 0;
-  bottom: 70px;
+  bottom: 16px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -421,7 +421,8 @@
 
   .communication-panel {
     right: -4px;
-    height: min(640px, calc(100vh - 96px));
+    bottom: 8px;
+    height: min(640px, calc(100vh - 32px));
   }
 
   .communication-resize-handle,

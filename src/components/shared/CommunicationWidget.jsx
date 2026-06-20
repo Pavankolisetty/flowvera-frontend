@@ -28,23 +28,47 @@ const getInitials = (name = "") => {
 const formatTime = (value) => {
   if (!value) return "";
   const normalizedValue = typeof value === "string" && !/[zZ]|[+-]\d{2}:?\d{2}$/.test(value)
-    ? value.replace("T", " ")
+    ? `${value.replace(" ", "T")}Z`
     : value;
   const date = new Date(normalizedValue);
   if (Number.isNaN(date.getTime())) return "";
-  const today = new Date();
-  const isToday = date.toDateString() === today.toDateString();
+  const istDate = new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+  const todayIst = new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
   const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayIst = new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(yesterday);
+  const isToday = istDate === todayIst;
   const dayLabel = isToday
     ? "Today"
-    : date.toDateString() === yesterday.toDateString()
+    : istDate === yesterdayIst
       ? "Yesterday"
-      : date.toLocaleDateString([], { month: "short", day: "numeric" });
-  return `${dayLabel}, ${date.toLocaleTimeString([], {
+      : new Intl.DateTimeFormat("en-IN", {
+          timeZone: "Asia/Kolkata",
+          month: "short",
+          day: "numeric",
+        }).format(date);
+  const timeLabel = new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
     hour: "2-digit",
     minute: "2-digit",
-  })}`;
+    hour12: true,
+  }).format(date);
+  return `${dayLabel}, ${timeLabel}`;
 };
 
 const formatFileSize = (bytes) => {
@@ -147,7 +171,7 @@ export default function CommunicationWidget() {
   const handleResize = (event) => {
     if (!resizeRef.current) return;
     const maxWidth = Math.max(340, window.innerWidth - 48);
-    const maxHeight = Math.max(460, window.innerHeight - 110);
+    const maxHeight = Math.max(460, window.innerHeight - 48);
     const nextWidth = Math.min(
       maxWidth,
       Math.max(380, resizeRef.current.startWidth - (event.clientX - resizeRef.current.startX))
@@ -262,7 +286,7 @@ export default function CommunicationWidget() {
           aria-label="Team communication"
           style={{
             width: `min(${panelSize.width}px, calc(100vw - 32px))`,
-            height: `min(${panelSize.height}px, calc(100vh - 110px))`,
+            height: `min(${panelSize.height}px, calc(100vh - 48px))`,
           }}
         >
           <div className="communication-header">
