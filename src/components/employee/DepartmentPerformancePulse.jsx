@@ -1,4 +1,4 @@
-import { Trophy, TrendingUp, UsersRound } from "lucide-react";
+import { Sparkles, TrendingUp, UsersRound } from "lucide-react";
 
 const getInitials = (name = "") => {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -38,7 +38,7 @@ export default function DepartmentPerformancePulse({ members = [], loading, erro
         </div>
         <div className="department-pulse-score">
           <TrendingUp size={16} />
-          <span>{departmentAverage}%</span>
+          <span>Dept avg {departmentAverage}%</span>
         </div>
       </div>
 
@@ -50,15 +50,15 @@ export default function DepartmentPerformancePulse({ members = [], loading, erro
         <div className="department-pulse-empty">No department teammates available yet.</div>
       ) : (
         <div className="department-pulse-list">
-          {orderedMembers.map((member, index) => {
+          {orderedMembers.map((member) => {
             const tone = toneForProgress(member.averageProgress);
             return (
               <article
                 className={`department-pulse-row ${member.currentUser ? "self" : ""} ${tone}`}
                 key={member.empId}
               >
-                <div className="department-pulse-rank">
-                  {member.currentUser ? <Trophy size={15} /> : index + 1}
+                <div className="department-pulse-status">
+                  <Sparkles size={15} />
                 </div>
                 <div className="department-pulse-avatar">{getInitials(member.name)}</div>
                 <div className="department-pulse-copy">

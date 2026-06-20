@@ -750,7 +750,7 @@
 }
 
 .department-pulse-score {
-  min-width: 74px;
+  min-width: 112px;
   height: 42px;
   border-radius: 999px;
   display: inline-flex;
@@ -761,6 +761,8 @@
   background: linear-gradient(135deg, #0f766e, #1e40af);
   box-shadow: 0 12px 24px rgba(15, 118, 110, 0.18);
   font-weight: 900;
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .department-pulse-list {
@@ -793,7 +795,7 @@
   background: linear-gradient(135deg, rgba(240, 253, 250, 0.96), rgba(255, 255, 255, 0.9));
 }
 
-.department-pulse-rank,
+.department-pulse-status,
 .department-pulse-avatar {
   display: inline-flex;
   align-items: center;
@@ -801,19 +803,19 @@
   flex-shrink: 0;
 }
 
-.department-pulse-rank {
+.department-pulse-status {
   width: 28px;
   height: 28px;
-  border-radius: 10px;
-  color: #64748b;
-  background: rgba(15, 23, 42, 0.05);
+  border-radius: 999px;
+  color: #0f766e;
+  background: rgba(15, 118, 110, 0.1);
   font-size: 12px;
   font-weight: 900;
 }
 
-.department-pulse-row.self .department-pulse-rank {
-  color: #b45309;
-  background: rgba(245, 158, 11, 0.16);
+.department-pulse-row.self .department-pulse-status {
+  color: #1d4ed8;
+  background: rgba(59, 130, 246, 0.12);
 }
 
 .department-pulse-avatar {
