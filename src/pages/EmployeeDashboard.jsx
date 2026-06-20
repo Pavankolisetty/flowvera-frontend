@@ -4,6 +4,7 @@ import TaskList from "../components/employee/TaskList";
 import AttendancePanel from "../components/employee/AttendancePanel";
 import QuoteSection from "../components/employee/QuoteSection";
 import TodaySummaryStrip from "../components/employee/TodaySummaryStrip";
+import DepartmentPerformancePulse from "../components/employee/DepartmentPerformancePulse";
 import CommunicationWidget from "../components/shared/CommunicationWidget";
 import { useAuth } from "../context/AuthContext";
 import "../styles/EmployeeDashboard.css";
@@ -184,6 +185,7 @@ export default function EmployeeDashboard() {
   const { authFetch, user } = useAuth();
   const [profileName, setProfileName] = useState(user?.name || "");
   const [tasks, setTasks] = useState([]);
+  const [departmentPerformance, setDepartmentPerformance] = useState([]);
   const [todaySummary, setTodaySummary] = useState({
     dueToday: 0,
     overdue: 0,
@@ -217,12 +219,14 @@ export default function EmployeeDashboard() {
           allTasksResponse,
           delegatedTasksResponse,
           leaveRequestsResponse,
+          departmentPerformanceResponse,
         ] = await Promise.all([
           authFetch("/api/employee/me"),
           authFetch("/api/employee/my-tasks/active"),
           authFetch("/api/employee/my-tasks"),
           authFetch("/api/employee/delegated-tasks"),
           authFetch("/api/employee/leave/requests"),
+          authFetch("/api/employee/department-performance"),
         ]);
 
         if (!profileResponse.ok) {
@@ -250,15 +254,22 @@ export default function EmployeeDashboard() {
           throw new Error(message || "Failed to load leave notifications");
         }
 
+        if (!departmentPerformanceResponse.ok) {
+          const message = await departmentPerformanceResponse.text();
+          throw new Error(message || "Failed to load department performance");
+        }
+
         const profileData = await profileResponse.json();
         const tasksData = await tasksResponse.json();
         const allTasksData = await allTasksResponse.json();
         const delegatedTasksData = await delegatedTasksResponse.json();
         const leaveRequestsData = await leaveRequestsResponse.json();
+        const departmentPerformanceData = await departmentPerformanceResponse.json();
 
         if (isMounted) {
           setProfileName(profileData.name || user?.name || "");
           setTasks(tasksData || []);
+          setDepartmentPerformance(departmentPerformanceData || []);
           setTodaySummary(buildTodaySummary(allTasksData || []));
           const notificationItems = buildDashboardNotifications(
             allTasksData || [],
@@ -333,7 +344,14 @@ export default function EmployeeDashboard() {
         <TodaySummaryStrip summary={todaySummary} loading={status.loading} />
 
         <section className="employee-grid">
-          <TaskList tasks={tasks} status={status} />
+          <div className="employee-left-stack">
+            <TaskList tasks={tasks} status={status} />
+            <DepartmentPerformancePulse
+              members={departmentPerformance}
+              loading={status.loading}
+              error={status.error}
+            />
+          </div>
           <AttendancePanel />
         </section>
       </div>
