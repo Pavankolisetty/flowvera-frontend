@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Bell, Download, FileText, Megaphone, MessageCircle, Paperclip, Send, Users, X } from "lucide-react";
+import { Bell, Download, FileText, Maximize2, Megaphone, MessageCircle, Minimize2, Paperclip, Send, Users, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import "../../styles/CommunicationWidget.css";
 
@@ -8,6 +8,13 @@ const audienceLabels = {
   DEPARTMENT: "Department",
   ALL: "All employees",
   ANNOUNCEMENT: "Announcement",
+};
+
+const audienceHints = {
+  EMPLOYEE: "Keep it focused. Share a quick doubt, update, or document with the selected teammate.",
+  DEPARTMENT: "Align your department on blockers, deadlines, handoffs, or shared work notes.",
+  ALL: "Share a clear team-wide update, useful context, or request that everyone should know.",
+  ANNOUNCEMENT: "Send a formal work announcement for important updates, reminders, or decisions.",
 };
 
 const getInitials = (name = "") => {
@@ -20,14 +27,24 @@ const getInitials = (name = "") => {
 
 const formatTime = (value) => {
   if (!value) return "";
-  const date = new Date(value);
+  const normalizedValue = typeof value === "string" && !/[zZ]|[+-]\d{2}:?\d{2}$/.test(value)
+    ? value.replace("T", " ")
+    : value;
+  const date = new Date(normalizedValue);
   if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleString([], {
-    month: "short",
-    day: "numeric",
+  const today = new Date();
+  const isToday = date.toDateString() === today.toDateString();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  const dayLabel = isToday
+    ? "Today"
+    : date.toDateString() === yesterday.toDateString()
+      ? "Yesterday"
+      : date.toLocaleDateString([], { month: "short", day: "numeric" });
+  return `${dayLabel}, ${date.toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
-  });
+  })}`;
 };
 
 const formatFileSize = (bytes) => {
@@ -53,8 +70,17 @@ export default function CommunicationWidget() {
   const [targetDepartment, setTargetDepartment] = useState("");
   const [body, setBody] = useState("");
   const [file, setFile] = useState(null);
+  const [panelSize, setPanelSize] = useState(() => {
+    try {
+      const stored = localStorage.getItem("flowvera_communication_panel_size");
+      return stored ? JSON.parse(stored) : { width: 430, height: 680 };
+    } catch (error) {
+      return { width: 430, height: 680 };
+    }
+  });
   const [status, setStatus] = useState({ loading: true, sending: false, error: "" });
   const feedRef = useRef(null);
+  const resizeRef = useRef(null);
 
   const visibleAudiences = useMemo(() => {
     const base = ["EMPLOYEE", "DEPARTMENT", "ALL"];
@@ -105,6 +131,56 @@ export default function CommunicationWidget() {
       authFetch("/api/communication/seen", { method: "POST" }).catch(() => {});
     }
   };
+
+  const startResize = (event) => {
+    event.preventDefault();
+    resizeRef.current = {
+      startX: event.clientX,
+      startY: event.clientY,
+      startWidth: panelSize.width,
+      startHeight: panelSize.height,
+    };
+    window.addEventListener("mousemove", handleResize);
+    window.addEventListener("mouseup", stopResize);
+  };
+
+  const handleResize = (event) => {
+    if (!resizeRef.current) return;
+    const maxWidth = Math.max(340, window.innerWidth - 48);
+    const maxHeight = Math.max(460, window.innerHeight - 110);
+    const nextWidth = Math.min(
+      maxWidth,
+      Math.max(380, resizeRef.current.startWidth - (event.clientX - resizeRef.current.startX))
+    );
+    const nextHeight = Math.min(
+      maxHeight,
+      Math.max(520, resizeRef.current.startHeight - (event.clientY - resizeRef.current.startY))
+    );
+    setPanelSize({ width: nextWidth, height: nextHeight });
+  };
+
+  const stopResize = () => {
+    resizeRef.current = null;
+    window.removeEventListener("mousemove", handleResize);
+    window.removeEventListener("mouseup", stopResize);
+  };
+
+  const toggleComfortSize = () => {
+    const compact = panelSize.width > 500 || panelSize.height > 720;
+    const nextSize = compact ? { width: 430, height: 680 } : { width: 620, height: 760 };
+    setPanelSize({
+      width: Math.min(nextSize.width, Math.max(380, window.innerWidth - 48)),
+      height: Math.min(nextSize.height, Math.max(520, window.innerHeight - 110)),
+    });
+  };
+
+  useEffect(() => {
+    localStorage.setItem("flowvera_communication_panel_size", JSON.stringify(panelSize));
+  }, [panelSize]);
+
+  useEffect(() => {
+    return () => stopResize();
+  }, []);
 
   const handleSend = async (event) => {
     event.preventDefault();
@@ -181,15 +257,27 @@ export default function CommunicationWidget() {
       </button>
 
       {open && (
-        <section className="communication-panel" aria-label="Team communication">
+        <section
+          className="communication-panel"
+          aria-label="Team communication"
+          style={{
+            width: `min(${panelSize.width}px, calc(100vw - 32px))`,
+            height: `min(${panelSize.height}px, calc(100vh - 110px))`,
+          }}
+        >
           <div className="communication-header">
             <div>
               <span className="communication-kicker">Work messages</span>
               <h2>Team Communication</h2>
             </div>
-            <button className="communication-icon-btn" onClick={toggleOpen} aria-label="Close">
-              <X size={18} />
-            </button>
+            <div className="communication-header-actions">
+              <button className="communication-icon-btn" onClick={toggleComfortSize} aria-label="Resize panel">
+                {panelSize.width > 500 || panelSize.height > 720 ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
+              </button>
+              <button className="communication-icon-btn" onClick={toggleOpen} aria-label="Close">
+                <X size={18} />
+              </button>
+            </div>
           </div>
 
           <div className="communication-audience-row">
@@ -227,8 +315,10 @@ export default function CommunicationWidget() {
               </select>
             )}
 
-            {audience === "ALL" && <span>Message will go to all employees except you.</span>}
-            {audience === "ANNOUNCEMENT" && <span>Announcement will notify eligible employees except you.</span>}
+            <div className={`communication-guidance ${audience.toLowerCase()}`}>
+              {audience === "ANNOUNCEMENT" ? <Megaphone size={15} /> : <MessageCircle size={15} />}
+              <span>{audienceHints[audience]}</span>
+            </div>
           </div>
 
           <div className="communication-feed" ref={feedRef}>
@@ -297,6 +387,12 @@ export default function CommunicationWidget() {
               </button>
             </div>
           </form>
+          <button
+            className="communication-resize-handle"
+            type="button"
+            onMouseDown={startResize}
+            aria-label="Resize communication panel"
+          ></button>
         </section>
       )}
     </div>

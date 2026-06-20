@@ -42,8 +42,6 @@
   position: absolute;
   right: 0;
   bottom: 70px;
-  width: min(430px, calc(100vw - 32px));
-  height: min(680px, calc(100vh - 110px));
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -51,6 +49,12 @@
   border-radius: 20px;
   background: #f8fafc;
   box-shadow: 0 26px 80px rgba(15, 23, 42, 0.34);
+}
+
+.communication-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .communication-header {
@@ -124,7 +128,7 @@
 }
 
 .communication-target {
-  padding: 10px 14px;
+  padding: 10px 14px 12px;
   background: #ffffff;
   border-bottom: 1px solid #e2e8f0;
 }
@@ -139,10 +143,45 @@
   background: #ffffff;
 }
 
-.communication-target span {
+.communication-target > span {
   color: #475569;
   font-size: 0.82rem;
   font-weight: 600;
+}
+
+.communication-guidance {
+  min-height: 36px;
+  margin-top: 9px;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 9px 10px;
+  color: #1e3a8a;
+  background: linear-gradient(135deg, #eff6ff, #f8fafc);
+  font-size: 0.78rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.communication-guidance.department {
+  border-color: #ccfbf1;
+  color: #115e59;
+  background: linear-gradient(135deg, #f0fdfa, #f8fafc);
+}
+
+.communication-guidance.all {
+  border-color: #fde68a;
+  color: #854d0e;
+  background: linear-gradient(135deg, #fffbeb, #f8fafc);
+}
+
+.communication-guidance.announcement {
+  border-color: #fecaca;
+  color: #991b1b;
+  background: linear-gradient(135deg, #fef2f2, #f8fafc);
 }
 
 .communication-feed {
@@ -215,6 +254,10 @@
   margin-bottom: 6px;
   color: #64748b;
   font-size: 0.72rem;
+}
+
+.communication-meta time {
+  white-space: nowrap;
 }
 
 .communication-meta strong {
@@ -351,6 +394,25 @@
   cursor: not-allowed;
 }
 
+.communication-resize-handle {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 8px 0 8px 0;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.68) 0 2px, transparent 2px 7px),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.48) 0 2px, transparent 2px 12px);
+  cursor: nwse-resize;
+  opacity: 0.75;
+}
+
+.communication-resize-handle:hover {
+  opacity: 1;
+}
+
 @media (max-width: 640px) {
   .communication-widget {
     right: 16px;
@@ -360,5 +422,10 @@
   .communication-panel {
     right: -4px;
     height: min(640px, calc(100vh - 96px));
+  }
+
+  .communication-resize-handle,
+  .communication-header-actions .communication-icon-btn:first-child {
+    display: none;
   }
 }
