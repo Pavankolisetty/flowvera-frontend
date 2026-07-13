@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, CheckCircle2, Clock3, Mail, MessageSquare, Phone, ShieldCheck, Sparkles, User } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock3, Mail, MessageSquare, Phone, ShieldCheck, Sparkles, User, XCircle } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 import { buildApiUrl } from "../config/api";
@@ -13,6 +13,14 @@ const countryOptions = [
   { iso: "AE", name: "United Arab Emirates", dialCode: "+971" },
   { iso: "SG", name: "Singapore", dialCode: "+65" },
 ];
+
+const phoneRules = {
+  IN: { digits: 10, pattern: /^[6-9]\d{9}$/, message: "India phone number must be 10 digits and start with 6, 7, 8, or 9." },
+  US: { digits: 10, pattern: /^\d{10}$/, message: "US phone number must contain exactly 10 digits." },
+  GB: { min: 10, max: 11, pattern: /^\d{10,11}$/, message: "UK phone number must contain 10 or 11 digits." },
+  AE: { digits: 9, pattern: /^[2-9]\d{8}$/, message: "UAE phone number must contain 9 digits." },
+  SG: { digits: 8, pattern: /^[689]\d{7}$/, message: "Singapore phone number must be 8 digits and start with 6, 8, or 9." },
+};
 
 const messageFromPayload = async (response, fallback) => {
   const payload = await response.json().catch(() => null);
@@ -51,6 +59,7 @@ export default function RegistrationPage() {
     debugOtp: "",
   });
   const [completionNotice, setCompletionNotice] = useState(null);
+  const [phoneNotice, setPhoneNotice] = useState("");
 
   useEffect(() => {
     return () => {
@@ -59,6 +68,14 @@ export default function RegistrationPage() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!phoneNotice) {
+      return undefined;
+    }
+    const timer = window.setTimeout(() => setPhoneNotice(""), 3000);
+    return () => window.clearTimeout(timer);
+  }, [phoneNotice]);
 
   useEffect(() => {
     if (!isVerificationRoute || !token) {
@@ -92,12 +109,73 @@ export default function RegistrationPage() {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    const nextValue = name === "phone" ? value.replace(/\D/g, "") : value;
+    if (name === "phoneCountryIso") {
+      const nextRule = phoneRules[value];
+      const nextPhone = nextRule?.digits
+        ? formData.phone.slice(0, nextRule.digits)
+        : nextRule?.max
+          ? formData.phone.slice(0, nextRule.max)
+          : formData.phone;
+      setFormData((current) => ({ ...current, phoneCountryIso: value, phone: nextPhone }));
+      setState((current) => ({ ...current, error: "" }));
+      setPhoneNotice("");
+      return;
+    }
+
+    let nextValue = name === "phone" ? value.replace(/\D/g, "") : value;
+    if (name === "phone") {
+      const rule = phoneRules[formData.phoneCountryIso];
+      const maxDigits = rule?.digits || rule?.max;
+      if (maxDigits) {
+        nextValue = nextValue.slice(0, maxDigits);
+      }
+      setPhoneNotice("");
+    }
     setFormData((current) => ({ ...current, [name]: nextValue }));
     setState((current) => ({ ...current, error: "" }));
   };
 
+  const phoneValidationMessage = () => {
+    const digits = formData.phone.replace(/\D/g, "");
+    const rule = phoneRules[formData.phoneCountryIso];
+    if (!digits) {
+      return "Phone number is required.";
+    }
+    if (rule?.digits && digits.length !== rule.digits) {
+      return `Enter exactly ${rule.digits} digits. You entered ${digits.length}.`;
+    }
+    if (rule?.min && digits.length < rule.min) {
+      return `Enter at least ${rule.min} digits. You entered ${digits.length}.`;
+    }
+    if (rule?.max && digits.length > rule.max) {
+      return `Enter no more than ${rule.max} digits.`;
+    }
+    if (rule?.pattern && !rule.pattern.test(digits)) {
+      return rule.message;
+    }
+
+    const parsed = parsePhoneNumberFromString(digits, formData.phoneCountryIso);
+    if (!parsed || !parsed.isValid()) {
+      return "Enter a valid phone number for the selected country.";
+    }
+    return "";
+  };
+
+  const showPhoneValidation = () => {
+    const message = phoneValidationMessage();
+    if (message) {
+      setPhoneNotice(message);
+      return false;
+    }
+    setPhoneNotice("");
+    return true;
+  };
+
   const normalizedPhone = () => {
+    const validationMessage = phoneValidationMessage();
+    if (validationMessage) {
+      throw new Error(validationMessage);
+    }
     const parsed = parsePhoneNumberFromString(formData.phone, formData.phoneCountryIso);
     if (!parsed || !parsed.isValid()) {
       throw new Error("Enter a valid phone number.");
@@ -151,6 +229,9 @@ export default function RegistrationPage() {
   };
 
   const sendOtp = async (resend = false) => {
+    if (!showPhoneValidation()) {
+      return;
+    }
     try {
       const phone = normalizedPhone();
       setStatus((current) => ({ ...current, sendingOtp: true }));
@@ -356,10 +437,17 @@ export default function RegistrationPage() {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
+                onBlur={showPhoneValidation}
                 disabled={!state.emailVerified || state.phoneVerified}
                 placeholder="Phone number"
               />
             </div>
+            {phoneNotice && (
+              <div className="registration-phone-notice" role="alert">
+                <XCircle size={17} />
+                <span>{phoneNotice}</span>
+              </div>
+            )}
             <div className="registration-actions">
               <button onClick={() => sendOtp(false)} disabled={!state.emailVerified || status.sendingOtp || state.phoneVerified}>
                 {status.sendingOtp ? "Sending OTP..." : "Send OTP"}

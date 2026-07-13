@@ -24,6 +24,9 @@ export default function LoginPage() {
   const location = useLocation()
   const { login } = useAuth()
   const returnTo = location.state?.from
+  const loginParams = new URLSearchParams(location.search)
+  const approvedEmail = loginParams.get("email") || ""
+  const temporaryPassword = loginParams.get("temporaryPassword") || ""
 
   useEffect(() => {
     // Check if there's a success message from password update
@@ -33,6 +36,18 @@ export default function LoginPage() {
       window.history.replaceState({}, document.title)
     }
   }, [location])
+
+  useEffect(() => {
+    if (approvedEmail) {
+      setEmail(approvedEmail)
+    }
+    if (temporaryPassword) {
+      setPassword(temporaryPassword)
+      window.sessionStorage.setItem("flowveraTemporaryPassword", temporaryPassword)
+      setSuccessMessage("Your approved credentials are ready. Sign in once, then set your new password.")
+      window.history.replaceState({}, document.title, "/login")
+    }
+  }, [approvedEmail, temporaryPassword])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -63,7 +78,11 @@ export default function LoginPage() {
       // Redirect based on user role
       const role = normalizeRole(data.role)
       if (role !== "ADMIN" && data.passwordResetRequired) {
-        navigate("/employee/update-password", { replace: true })
+        const storedTemporaryPassword = window.sessionStorage.getItem("flowveraTemporaryPassword") || password
+        navigate("/employee/update-password", {
+          replace: true,
+          state: { temporaryPassword: storedTemporaryPassword },
+        })
       } else if (returnTo && role !== "ADMIN" && returnTo.startsWith("/employee")) {
         navigate(returnTo, { replace: true })
       } else if (returnTo && role === "ADMIN" && returnTo.startsWith("/admin")) {

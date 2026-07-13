@@ -10,7 +10,35 @@ const initialPasswordState = {
   confirmPassword: "",
 };
 
-export default function AccountPanel({ open, mode = "profile", onClose, variant = "modal" }) {
+const getPasswordStrength = (password) => {
+  const value = password || "";
+  let score = 0;
+  if (value.length >= 8) score += 1;
+  if (value.length >= 12) score += 1;
+  if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score += 1;
+  if (/\d/.test(value)) score += 1;
+  if (/[^A-Za-z0-9]/.test(value)) score += 1;
+
+  if (!value) {
+    return { label: "Not started", className: "empty", score: 0 };
+  }
+  if (score <= 2) {
+    return { label: "Weak", className: "weak", score };
+  }
+  if (score <= 4) {
+    return { label: "Medium", className: "medium", score };
+  }
+  return { label: "Strong", className: "strong", score };
+};
+
+const passwordRequirements = [
+  { label: "At least 8 characters", test: (value) => value.length >= 8 },
+  { label: "Uppercase and lowercase letters", test: (value) => /[A-Z]/.test(value) && /[a-z]/.test(value) },
+  { label: "At least one number", test: (value) => /\d/.test(value) },
+  { label: "At least one special character", test: (value) => /[^A-Za-z0-9]/.test(value) },
+];
+
+export default function AccountPanel({ open, mode = "profile", onClose, variant = "modal", initialCurrentPassword = "" }) {
   const { authFetch, user, updateUser, logout } = useAuth();
   const [panelMode, setPanelMode] = useState(mode);
   const [profile, setProfile] = useState(null);
@@ -44,7 +72,11 @@ export default function AccountPanel({ open, mode = "profile", onClose, variant 
         newPassword: false,
         confirmPassword: false,
       });
-  }, [open, mode]);
+      setPasswordData((current) => ({
+        ...current,
+        oldPassword: initialCurrentPassword || current.oldPassword || "",
+      }));
+  }, [open, mode, initialCurrentPassword]);
 
   useEffect(() => {
     if (!open) {
@@ -96,6 +128,7 @@ export default function AccountPanel({ open, mode = "profile", onClose, variant 
   const designation = String(profile?.designation || user?.designation || "").trim() || fallbackDesignation;
   const emailLabel = user?.role === "ADMIN" ? "Email Address / Approval Alerts" : "Email Address";
   const departmentBrand = getDepartmentBrand(profile?.department || user?.department);
+  const passwordStrength = getPasswordStrength(passwordData.newPassword);
 
   if (!open) {
     return null;
@@ -138,8 +171,9 @@ export default function AccountPanel({ open, mode = "profile", onClose, variant 
       return;
     }
 
-    if (passwordData.newPassword.length < 6) {
-      setStatus({ loading: false, error: "New password must be at least 6 characters.", success: "" });
+    const unmetRequirement = passwordRequirements.find((item) => !item.test(passwordData.newPassword));
+    if (unmetRequirement) {
+      setStatus({ loading: false, error: `New password requirement missing: ${unmetRequirement.label}.`, success: "" });
       return;
     }
 
@@ -162,6 +196,7 @@ export default function AccountPanel({ open, mode = "profile", onClose, variant 
 
       setStatus({ loading: false, error: "", success: "Password updated. Please sign in again." });
       setPasswordData(initialPasswordState);
+      window.sessionStorage.removeItem("flowveraTemporaryPassword");
       updateUser({ passwordResetRequired: false });
       setTimeout(async () => {
         await logout();
@@ -253,6 +288,26 @@ export default function AccountPanel({ open, mode = "profile", onClose, variant 
         <form className="account-password-form" onSubmit={handlePasswordSave}>
           {renderPasswordInput("oldPassword", "Current Password", "current-password")}
           {renderPasswordInput("newPassword", "New Password", "new-password")}
+          <div className={`password-strength-card ${passwordStrength.className}`}>
+            <div className="password-strength-header">
+              <span>Password strength</span>
+              <strong>{passwordStrength.label}</strong>
+            </div>
+            <div className="password-strength-track" aria-hidden="true">
+              <span style={{ width: `${Math.max(12, passwordStrength.score * 20)}%` }}></span>
+            </div>
+            <ul className="password-requirements">
+              {passwordRequirements.map((item) => {
+                const passed = item.test(passwordData.newPassword);
+                return (
+                  <li key={item.label} className={passed ? "passed" : ""}>
+                    {passed ? <Check size={14} /> : <X size={14} />}
+                    {item.label}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
           {renderPasswordInput("confirmPassword", "Confirm New Password", "new-password")}
           <button type="submit" className="password-submit-btn" disabled={status.loading}>
             {status.loading ? "Updating..." : "Update Password"}

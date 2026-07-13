@@ -262,6 +262,39 @@
   flex-wrap: wrap;
 }
 
+.registration-phone-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  margin: -4px 0 14px;
+  border: 1px solid rgba(185, 28, 28, 0.18);
+  border-radius: 999px;
+  padding: 9px 12px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.9rem;
+  font-weight: 700;
+  animation: phone-notice-in 180ms ease-out;
+}
+
+.registration-phone-notice svg {
+  flex-shrink: 0;
+}
+
+@keyframes phone-notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .registration-actions button,
 .otp-row button {
   border: none;

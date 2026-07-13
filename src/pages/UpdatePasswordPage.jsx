@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import EmployeeHeader from "../components/EmployeeHeader";
 import AccountPanel from "../components/shared/AccountPanel";
 import { useAuth } from "../context/AuthContext";
@@ -7,7 +8,12 @@ import "../styles/EmployeeDashboard.css";
 export default function UpdatePasswordPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const isFirstLoginReset = Boolean(user?.passwordResetRequired);
+  const temporaryPassword =
+    location.state?.temporaryPassword ||
+    window.sessionStorage.getItem("flowveraTemporaryPassword") ||
+    "";
 
   return (
     <div className="employee-dashboard">
@@ -28,6 +34,7 @@ export default function UpdatePasswordPage() {
             open={true}
             mode="password"
             variant="page"
+            initialCurrentPassword={isFirstLoginReset ? temporaryPassword : ""}
             onClose={() => navigate("/employee/dashboard")}
           />
         </section>

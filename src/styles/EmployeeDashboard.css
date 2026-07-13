@@ -3686,6 +3686,97 @@
   outline: none;
 }
 
+.password-strength-card {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  padding: 14px;
+  background: #f8fafc;
+}
+
+.password-strength-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  color: #475569;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.password-strength-header strong {
+  color: #64748b;
+}
+
+.password-strength-card.weak .password-strength-header strong {
+  color: #b91c1c;
+}
+
+.password-strength-card.medium .password-strength-header strong {
+  color: #b45309;
+}
+
+.password-strength-card.strong .password-strength-header strong {
+  color: #047857;
+}
+
+.password-strength-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e2e8f0;
+}
+
+.password-strength-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #94a3b8;
+  transition: width 0.2s ease, background 0.2s ease;
+}
+
+.password-strength-card.weak .password-strength-track span {
+  background: #ef4444;
+}
+
+.password-strength-card.medium .password-strength-track span {
+  background: #f59e0b;
+}
+
+.password-strength-card.strong .password-strength-track span {
+  background: #10b981;
+}
+
+.password-requirements {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.password-requirements li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.password-requirements li svg {
+  color: #b91c1c;
+  flex-shrink: 0;
+}
+
+.password-requirements li.passed {
+  color: #047857;
+}
+
+.password-requirements li.passed svg {
+  color: #047857;
+}
+
 .account-action-btn {
   border: none;
   border-radius: 999px;

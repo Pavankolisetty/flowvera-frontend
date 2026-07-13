@@ -23,6 +23,9 @@ const HeroSection = () => {
             <a href="#features">Features</a>
             <a href="#about">About</a>
             <a href="#contact">Contact</a>
+            <button className="nav-signup" onClick={() => navigate("/register")}>
+              Sign up
+            </button>
             <button className="nav-login" onClick={() => navigate("/login")}>
               Login
             </button>
@@ -63,10 +66,16 @@ const HeroSection = () => {
           >
             <button
               className="btn btn-primary"
+              onClick={() => navigate("/register")}
+            >
+              Sign up
+              <ArrowRight size={16} />
+            </button>
+            <button
+              className="btn btn-secondary"
               onClick={() => navigate("/login")}
             >
-              Request a Demo
-              <ArrowRight size={16} />
+              Login
             </button>
           </motion.div>
         </div>
