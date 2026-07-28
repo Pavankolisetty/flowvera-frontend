@@ -27,6 +27,13 @@ export const DEPARTMENT_BRANDS = {
     softColor: "#dbeafe",
     borderColor: "#93c5fd",
   },
+  Testing: {
+    shortName: "QA",
+    icon: "Shield",
+    color: "#0891b2",
+    softColor: "#cffafe",
+    borderColor: "#67e8f9",
+  },
 };
 
 export const getDepartmentBrand = (department) =>

@@ -14,7 +14,14 @@ export const DEPARTMENT_ROLE_OPTIONS = {
     "Cloud Engineer",
     "Front End Developer",
     "Backend Developer",
+    "AI Engineer",
     "Data Scientist",
+  ],
+  Testing: [
+    "QA Engineer",
+    "Test Engineer",
+    "Automation Test Engineer",
+    "Manual Test Engineer",
   ],
 };
 

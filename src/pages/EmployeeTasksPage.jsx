@@ -117,8 +117,14 @@ const initialAuthorityForm = {
 
 export default function EmployeeTasksPage() {
   const { user, authFetch } = useAuth();
-  const canAssignTask = user?.role === "ADMIN" || Boolean(user?.canAssignTask);
-  const isDepartmentLead = Boolean(user?.departmentLead);
+  const [profile, setProfile] = useState(null);
+  const currentProfile = profile || user || {};
+  const canAssignTask = user?.role === "ADMIN" || Boolean(currentProfile.canAssignTask);
+  const isDepartmentLead = Boolean(currentProfile.departmentLead);
+  const isTestingDepartmentUser =
+    String(currentProfile.department || "").trim().toLowerCase() === "testing";
+  const canReviewWorkspace = canAssignTask || isTestingDepartmentUser;
+  const hasTaskAuthorityNotification = Boolean(currentProfile.taskAuthorityNotificationUnread);
   const [searchParams] = useSearchParams();
   const [activeSection, setActiveSection] = useState("assigned");
   const [tasks, setTasks] = useState([]);
@@ -155,9 +161,9 @@ export default function EmployeeTasksPage() {
       ),
       hasDelegated: delegatedTasks.some(
         (task) => task.adminNotificationUnread && task.adminNotificationMessage
-      ),
+      ) || hasTaskAuthorityNotification,
     }),
-    [tasks, delegatedTasks]
+    [tasks, delegatedTasks, hasTaskAuthorityNotification]
   );
 
   const activeSubmissionTask = useMemo(
@@ -169,6 +175,17 @@ export default function EmployeeTasksPage() {
     () => tasks.find((assignment) => assignment.id === extensionModal.assignmentId),
     [extensionModal.assignmentId, tasks]
   );
+
+  const loadProfile = async () => {
+    const response = await authFetch("/api/employee/me");
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(message || "Failed to load profile");
+    }
+    const data = await response.json();
+    setProfile(data || null);
+    return data || null;
+  };
 
   const loadAssignedTasks = async () => {
     const response = await authFetch("/api/employee/my-tasks");
@@ -209,7 +226,8 @@ export default function EmployeeTasksPage() {
     }
 
     try {
-      const [assignedData, delegatedData] = await Promise.all([
+      const [profileData, assignedData, delegatedData] = await Promise.all([
+        loadProfile(),
         loadAssignedTasks(),
         loadDelegatedTasks(),
         loadAssignableEmployees(),
@@ -219,7 +237,7 @@ export default function EmployeeTasksPage() {
         setStatus({ loading: false, error: "" });
       }
 
-      return { assignedData, delegatedData };
+      return { profileData, assignedData, delegatedData };
     } catch (error) {
       if (!silent) {
         setStatus({ loading: false, error: error.message });
@@ -231,12 +249,13 @@ export default function EmployeeTasksPage() {
   useEffect(() => {
     if (
       requestedSection === "assigned" ||
-      (canAssignTask && (requestedSection === "create" || requestedSection === "reviews")) ||
+      (canAssignTask && requestedSection === "create") ||
+      (canReviewWorkspace && requestedSection === "reviews") ||
       (isDepartmentLead && requestedSection === "authority")
     ) {
       setActiveSection(requestedSection);
     }
-  }, [canAssignTask, isDepartmentLead, requestedSection]);
+  }, [canAssignTask, canReviewWorkspace, isDepartmentLead, requestedSection]);
 
   useEffect(() => {
     if (!requestedAssignmentId) {
@@ -259,7 +278,7 @@ export default function EmployeeTasksPage() {
 
     const fetchWorkspace = async () => {
       try {
-        const { assignedData, delegatedData } = await refreshWorkspace();
+        const { profileData, assignedData, delegatedData } = await refreshWorkspace();
 
         if (!isMounted) {
           return;
@@ -306,20 +325,35 @@ export default function EmployeeTasksPage() {
                 : task
             )
           );
+        } else if (
+          profileData?.taskAuthorityNotificationUnread &&
+          profileData?.taskAuthorityNotificationMessage
+        ) {
+          setNotification({
+            title: "Temporary Task Authority",
+            message: profileData.taskAuthorityNotificationMessage,
+            type: "info",
+          });
+          authFetch("/api/employee/task-authority/notifications/read", { method: "PUT" }).catch(() => {});
+          setProfile((current) =>
+            current ? { ...current, taskAuthorityNotificationUnread: false } : current
+          );
         } else if (unreadDelegated.length) {
           setNotification({
             title: "Delegated Work Update",
             message: unreadDelegated[0].adminNotificationMessage,
             type: "info",
           });
-          authFetch("/api/employee/delegated-notifications/read", { method: "PUT" }).catch(() => {});
-          setDelegatedTasks((current) =>
-            current.map((task) =>
-              task.adminNotificationUnread
-                ? { ...task, adminNotificationUnread: false }
-                : task
-            )
-          );
+          if (!isTestingDepartmentUser) {
+            authFetch("/api/employee/delegated-notifications/read", { method: "PUT" }).catch(() => {});
+            setDelegatedTasks((current) =>
+              current.map((task) =>
+                task.adminNotificationUnread
+                  ? { ...task, adminNotificationUnread: false }
+                  : task
+              )
+            );
+          }
         }
       } catch (error) {
         if (isMounted) {
@@ -333,7 +367,7 @@ export default function EmployeeTasksPage() {
     return () => {
       isMounted = false;
     };
-  }, [authFetch]);
+  }, [authFetch, isTestingDepartmentUser]);
 
   useEffect(() => {
     if (!notification) {
@@ -1064,7 +1098,9 @@ export default function EmployeeTasksPage() {
       {delegatedTasks.length === 0 ? (
         <div className="employee-panel">
           <div className="employee-empty">
-            You have not delegated any tasks yet.
+            {isTestingDepartmentUser
+              ? "No submitted work is waiting for testing review."
+              : "You have not delegated any tasks yet."}
           </div>
         </div>
       ) : (
@@ -1106,6 +1142,12 @@ export default function EmployeeTasksPage() {
                     <UserPlus size={16} />
                     <span>Assigned to: {assignment.employee?.name || assignment.employee?.empId}</span>
                   </div>
+                  {isTestingDepartmentUser && (
+                    <div className="task-meta-item">
+                      <UserRound size={16} />
+                      <span>Assigned by: {formatAssignerLabel(assignment)}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="task-progress-bar">
@@ -1215,7 +1257,7 @@ export default function EmployeeTasksPage() {
                   </>
                 )}
 
-                {assignment.dueDateExtensionPending && (
+                {assignment.dueDateExtensionPending && !isTestingDepartmentUser && (
                   <button
                     className="task-action-btn primary"
                     onClick={() => handleApproveDueDateExtension(assignment.id)}
@@ -1396,7 +1438,7 @@ export default function EmployeeTasksPage() {
 
         <section className="employee-quote compact">
           <span className="quote-label">Tasks</span>
-          <h2>{canAssignTask ? "Manage your assigned work and delegated reviews" : "Manage your assigned work"}</h2>
+          <h2>{canReviewWorkspace ? "Manage your assigned work and reviews" : "Manage your assigned work"}</h2>
         </section>
 
         <div className="task-section-switcher">
@@ -1414,12 +1456,12 @@ export default function EmployeeTasksPage() {
               Create & Assign
             </button>
           )}
-          {canAssignTask && (
+          {canReviewWorkspace && (
             <button
               className={`task-section-btn ${activeSection === "reviews" ? "active" : ""}`}
               onClick={() => setActiveSection("reviews")}
             >
-              Assigned By Me
+              {isTestingDepartmentUser && !canAssignTask ? "Testing Review" : "Assigned By Me"}
               {taskNotifications.hasDelegated && <span className="task-section-dot"></span>}
             </button>
           )}
@@ -1445,7 +1487,7 @@ export default function EmployeeTasksPage() {
           renderCreateTask()
         ) : isDepartmentLead && activeSection === "authority" ? (
           renderAuthorityManager()
-        ) : canAssignTask ? (
+        ) : canReviewWorkspace ? (
           renderDelegatedReviews()
         ) : (
           renderAssignedTasks()

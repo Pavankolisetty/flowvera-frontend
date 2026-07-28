@@ -93,9 +93,19 @@ const buildTodaySummary = (assignments = []) => {
 
 const taskTitle = (assignment) => assignment?.task?.title || "Task";
 
-const buildDashboardNotifications = (assignedTasks = [], delegatedTasks = [], leaveRequests = []) => {
+const buildDashboardNotifications = (assignedTasks = [], delegatedTasks = [], leaveRequests = [], profile = null) => {
   const todayKey = toDateKey(new Date());
   const notifications = [];
+
+  if (profile?.taskAuthorityNotificationUnread && profile?.taskAuthorityNotificationMessage) {
+    notifications.push({
+      id: "task-authority",
+      type: "approval",
+      title: "Temporary task authority",
+      message: profile.taskAuthorityNotificationMessage,
+      to: "/employee/tasks?section=create",
+    });
+  }
 
   leaveRequests.forEach((request) => {
     const isFreshLeaveNotification =
@@ -208,6 +218,12 @@ export default function EmployeeDashboard() {
     authFetch("/api/employee/leave/notifications/read", { method: "PUT" }).catch(() => {});
   };
 
+  const markTaskAuthorityNotificationRead = () => {
+    authFetch("/api/employee/task-authority/notifications/read", { method: "PUT" }).catch(() => {});
+    setDashboardNotifications((current) => current.filter((item) => item.id !== "task-authority"));
+    setTaskNotifications((current) => ({ ...current, hasDelegated: false }));
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -274,7 +290,8 @@ export default function EmployeeDashboard() {
           const notificationItems = buildDashboardNotifications(
             allTasksData || [],
             delegatedTasksData || [],
-            leaveRequestsData || []
+            leaveRequestsData || [],
+            profileData
           );
           const seenKey = notificationSeenKey(user);
           const alreadySeen = window.sessionStorage.getItem(seenKey) === "true";
@@ -285,6 +302,9 @@ export default function EmployeeDashboard() {
             setNotificationsSeen(true);
             window.sessionStorage.setItem(seenKey, "true");
             markLeaveNotificationsRead();
+            if (profileData?.taskAuthorityNotificationUnread) {
+              markTaskAuthorityNotificationRead();
+            }
           } else {
             setNotificationsOpen(false);
           }
@@ -297,7 +317,7 @@ export default function EmployeeDashboard() {
                 task.employeeNotificationUnread &&
                 task.status === "CHANGES_REQUESTED"
             ),
-            hasDelegated: (delegatedTasksData || []).some(
+            hasDelegated: Boolean(profileData?.taskAuthorityNotificationUnread) || (delegatedTasksData || []).some(
               (task) => task.adminNotificationUnread && task.adminNotificationMessage
             ),
           });
@@ -332,12 +352,14 @@ export default function EmployeeDashboard() {
             setNotificationsSeen(true);
             window.sessionStorage.setItem(notificationSeenKey(user), "true");
             markLeaveNotificationsRead();
+            markTaskAuthorityNotificationRead();
           }}
           onCloseNotifications={() => {
             setNotificationsOpen(false);
             setNotificationsSeen(true);
             window.sessionStorage.setItem(notificationSeenKey(user), "true");
             markLeaveNotificationsRead();
+            markTaskAuthorityNotificationRead();
           }}
         />
 

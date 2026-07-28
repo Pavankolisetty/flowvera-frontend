@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, CheckCircle2, Clock3, Mail, MessageSquare, Phone, ShieldCheck, Sparkles, User, XCircle } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
@@ -27,6 +27,33 @@ const messageFromPayload = async (response, fallback) => {
   return payload?.message || fallback;
 };
 
+const REGISTRATION_PENDING_EMAIL_KEY = "flowvera.registration.pendingEmail";
+const REGISTRATION_EMAIL_VERIFIED_KEY = "flowvera.registration.emailVerified";
+
+const readPendingRegistrationEmail = () => {
+  if (typeof window === "undefined") {
+    return "";
+  }
+  return window.localStorage.getItem(REGISTRATION_PENDING_EMAIL_KEY) || "";
+};
+
+const rememberPendingRegistrationEmail = (email) => {
+  if (typeof window === "undefined" || !email) {
+    return;
+  }
+  window.localStorage.setItem(REGISTRATION_PENDING_EMAIL_KEY, email);
+};
+
+const notifyRegistrationEmailVerified = (email) => {
+  if (typeof window === "undefined" || !email) {
+    return;
+  }
+  window.localStorage.setItem(
+    REGISTRATION_EMAIL_VERIFIED_KEY,
+    JSON.stringify({ email, verifiedAt: Date.now() })
+  );
+};
+
 export default function RegistrationPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -39,7 +66,7 @@ export default function RegistrationPage() {
   const isVerificationRoute = normalizedPathname === "/auth/verify-email";
 
   const [formData, setFormData] = useState({
-    email: emailFromQuery,
+    email: emailFromQuery || readPendingRegistrationEmail(),
     phone: "",
     phoneCountryIso: "IN",
     name: "",
@@ -60,6 +87,16 @@ export default function RegistrationPage() {
   });
   const [completionNotice, setCompletionNotice] = useState(null);
   const [phoneNotice, setPhoneNotice] = useState("");
+
+  const applyVerifiedEmail = useCallback((email) => {
+    setFormData((current) => ({ ...current, email }));
+    setState((current) => ({
+      ...current,
+      emailVerified: true,
+      error: "",
+      message: "Email verified successfully. Continue with phone verification.",
+    }));
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -91,13 +128,8 @@ export default function RegistrationPage() {
           throw new Error(payload?.message || "Email verification failed.");
         }
         const verifiedEmail = payload?.email || emailFromQuery;
-        setFormData((current) => ({ ...current, email: verifiedEmail }));
-        setState((current) => ({
-          ...current,
-          emailVerified: true,
-          error: "",
-          message: "Email verified successfully. Continue with phone verification.",
-        }));
+        applyVerifiedEmail(verifiedEmail);
+        notifyRegistrationEmailVerified(verifiedEmail);
         navigate(`/register?email=${encodeURIComponent(verifiedEmail)}&emailVerified=1`, { replace: true });
       } catch (error) {
         setState((current) => ({ ...current, error: error.message, message: "" }));
@@ -105,7 +137,34 @@ export default function RegistrationPage() {
     };
 
     verifyEmail();
-  }, [emailFromQuery, isVerificationRoute, navigate, token]);
+  }, [applyVerifiedEmail, emailFromQuery, isVerificationRoute, navigate, token]);
+
+  useEffect(() => {
+    const handleStorage = (event) => {
+      if (event.key !== REGISTRATION_EMAIL_VERIFIED_KEY || !event.newValue) {
+        return;
+      }
+
+      let payload = null;
+      try {
+        payload = JSON.parse(event.newValue);
+      } catch {
+        return;
+      }
+      const verifiedEmail = payload?.email || "";
+      if (!verifiedEmail) {
+        return;
+      }
+
+      const currentEmail = formData.email.trim().toLowerCase();
+      if (!currentEmail || currentEmail === verifiedEmail.trim().toLowerCase()) {
+        applyVerifiedEmail(verifiedEmail);
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, [applyVerifiedEmail, formData.email]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -191,10 +250,12 @@ export default function RegistrationPage() {
 
     setStatus((current) => ({ ...current, sendingEmail: true }));
     try {
+      const email = formData.email.trim();
+      rememberPendingRegistrationEmail(email);
       const response = await fetch(buildApiUrl("/api/auth/start-registration"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email }),
+        body: JSON.stringify({ email }),
       });
       const message = await messageFromPayload(response, "Check your email to verify");
       if (!response.ok) {
@@ -211,10 +272,12 @@ export default function RegistrationPage() {
   const resendEmail = async () => {
     setStatus((current) => ({ ...current, sendingEmail: true }));
     try {
+      const email = formData.email.trim();
+      rememberPendingRegistrationEmail(email);
       const response = await fetch(buildApiUrl("/api/auth/resend-email-verification"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email }),
+        body: JSON.stringify({ email }),
       });
       const message = await messageFromPayload(response, "Check your email to verify");
       if (!response.ok) {
